@@ -28,20 +28,11 @@
   </style>
 </head>
 <body>
-  <!-- 3D Gyroscopic Net Canvas -->
+  <!-- 3D Interactive Net Canvas -->
   <canvas id="motion-net-canvas"></canvas>
   <div class="ambient-spotlight"></div>
-  
-  <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
-    <defs>
-      <linearGradient id="laserGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#ffffff" />
-        <stop offset="100%" stop-color="#707075" />
-      </linearGradient>
-    </defs>
-  </svg>
 
-  <div class="app-viewport">
+  <div class="app-viewport" style="position: relative; z-index: 2;">
     <!-- Top Header -->
     <header class="biometric-header">
       <div class="brand-cluster">
@@ -66,13 +57,13 @@
           <div class="gateway-card" id="card-pick-student" onclick="openStudentLogin()">
             <div class="gateway-icon">🥋</div>
             <h3>CADRE / STUDENT</h3>
-            <p>Check training attendance, medal showcase, pay fees from home, and tournament alerts.</p>
+            <p>Check training attendance, medal showcase, and upload belt certificates.</p>
             <button type="button" class="oval-btn primary">CADRE SIGN-IN</button>
           </div>
           <div class="gateway-card" id="card-pick-admin" onclick="openAdminLogin()">
             <div class="gateway-icon">⛩️</div>
             <h3>SENSEI / ADMIN</h3>
-            <p>Roster control, verify fee receipts, post tournament banners, and edit ranks.</p>
+            <p>Full dojo roster control, direct attendance editing, fee audits & medals.</p>
             <button type="button" class="oval-btn">COMMAND ACCESS</button>
           </div>
         </div>
@@ -94,16 +85,16 @@
       </div>
     </section>
 
-    <!-- SCREEN 3: SENSEI LOGIN -->
+    <!-- SCREEN 3: SENSEI LOGIN (NO DEFAULT PASSCODE) -->
     <section id="view-admin-login" class="view-panel hidden">
       <div class="bio-capsule login-box">
         <h2 class="box-title">>_ SENSEI CLEARANCE TERMINAL</h2>
         <span class="box-sub">ENTER MASTER INSTRUCTOR CREDENTIALS</span>
-        <form id="form-admin-login">
-          <input type="text" id="admin-login-email" class="curved-search-input" placeholder="Operator Email" required autocomplete="username" spellcheck="false" autocapitalize="none">
-          <input type="password" id="admin-login-pass" class="curved-search-input" placeholder="Passcode (Default: 1234)" required autocomplete="current-password">
-          <div id="admin-login-err" class="alert-msg"></div>
-          <button type="submit" id="btn-admin-submit" class="oval-btn primary full-width">UNLOCK COMMAND MATRIX</button>
+        <form id="form-admin-login" autocomplete="off">
+          <input type="text" id="admin-login-email" class="curved-search-input" placeholder="Operator Email" required autocomplete="off" spellcheck="false" autocapitalize="none" value="">
+          <input type="password" id="admin-login-pass" class="curved-search-input" placeholder="Passcode" required autocomplete="new-password" value="">
+          <div id="admin-login-err" class="alert-msg" style="color: #ff5252; margin-top: 8px; font-size: 0.8rem;"></div>
+          <button type="submit" id="btn-admin-submit" class="oval-btn primary full-width" style="margin-top: 12px;">UNLOCK COMMAND MATRIX</button>
           <button type="button" class="oval-btn text-only" onclick="showGateway()">← Return to Gateway</button>
         </form>
       </div>
@@ -131,93 +122,35 @@
         </div>
       </div>
 
-      <!-- UPCOMING TOURNAMENT VIEWER FOR STUDENTS -->
+      <!-- Tournaments Display for Students -->
       <div class="bio-capsule" style="flex-direction: column; align-items: stretch;">
-        <h3 class="box-title-mini">// 🥋 UPCOMING TOURNAMENT NOTICE</h3>
+        <h3 class="box-title-mini">// 🏆 UPCOMING TOURNAMENTS</h3>
         <div id="student-tournament-display"></div>
       </div>
 
-      <!-- PAY FEES AT HOME (UPI QR GENERATOR) -->
+      <!-- Fees Payment for Students -->
       <div class="bio-capsule" style="flex-direction: column; align-items: stretch;">
-        <h3 class="box-title-mini">// 💳 PAY FEES FROM HOME / घर बैठे फीस जमा करें</h3>
-        <p style="color: #aaa; font-size: 0.8rem; margin: 4px 0 10px 0;">
-          Plan Status: <span id="current-plan-badge" style="color: #4caf50; font-weight: bold;">Basic</span>
-        </p>
-
-        <div style="background: rgba(255,255,255,0.04); border-left: 3px solid #0078d4; padding: 10px 14px; border-radius: 4px; margin-bottom: 12px; font-size: 0.8rem; line-height: 1.5;">
-          <strong style="color: #fff;">How to Pay / भुगतान का तरीका:</strong>
-          <ol style="margin: 4px 0 0 0; padding-left: 18px; color: #ccc;">
-            <li>Select <strong>₹50 (1 Month)</strong> or <strong>₹95 (1 Year)</strong>.</li>
-            <li>Scan the generated QR with <strong>GPay, PhonePe, Paytm, or BHIM</strong> (or click "Pay via UPI App").</li>
-            <li>Send the payment screenshot to Sensei on WhatsApp.</li>
-            <li>QR स्कैन करके पेमेंट करें और स्क्रीनशॉट व्हाट्सएप पर भेजें।</li>
+        <h3 class="box-title-mini">// 💳 PAY FEES FROM HOME (UPI)</h3>
+        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.8rem; line-height: 1.5;">
+          <strong>How to Pay / घर बैठे फीस जमा करें:</strong>
+          <ol style="margin: 6px 0 0 0; padding-left: 18px; color: #ccc;">
+            <li>Select ₹50 (1 Month) or ₹95 (1 Year).</li>
+            <li>Scan the QR code with GPay, PhonePe, Paytm, or BHIM.</li>
+            <li>Send screenshot on WhatsApp for instant confirmation.</li>
           </ol>
         </div>
-
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button type="button" class="oval-btn primary" onclick="showUPIPayment(50, '1 Month Premium', 30)">1 MONTH (₹50)</button>
-          <button type="button" class="oval-btn primary" onclick="showUPIPayment(95, '1 Year Elite', 365)">1 YEAR (₹95)</button>
+          <button type="button" class="oval-btn primary" onclick="showUPIPayment(50, '1 Month Plan', 30)">1 MONTH (₹50)</button>
+          <button type="button" class="oval-btn primary" onclick="showUPIPayment(95, '1 Year Plan', 365)">1 YEAR (₹95)</button>
         </div>
-
-        <!-- Dynamic QR Box -->
-        <div id="upi-payment-box" style="display: none; text-align: center; margin-top: 14px; border-top: 1px solid #333; padding-top: 14px;">
-          <h4 id="upi-pay-title" style="color: #fff; margin: 0 0 8px 0; font-size: 0.95rem;"></h4>
+        <div id="upi-payment-box" style="display: none; text-align: center; margin-top: 15px; border-top: 1px solid #333; padding-top: 12px;">
+          <h4 id="upi-pay-title" style="color: #fff; margin: 0 0 8px 0;"></h4>
           <div style="background: #fff; display: inline-block; padding: 8px; border-radius: 8px;">
-            <img id="upi-qr-image" src="" alt="Payment QR Code" style="width: 190px; height: 190px; display: block;" />
+            <img id="upi-qr-image" src="" alt="UPI QR" style="width: 180px; height: 180px; display: block;" />
           </div>
           <div style="margin-top: 10px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
             <a id="upi-deep-link" href="#" class="oval-btn primary" style="text-decoration: none;">Pay via UPI App</a>
             <a id="whatsapp-receipt-link" href="#" target="_blank" class="oval-btn" style="text-decoration: none; background: #25D366; color: #fff;">WhatsApp Screenshot</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Medals Showcase -->
-      <div class="bio-capsule" style="flex-direction: column; align-items: stretch;">
-        <h3 class="box-title-mini">// TOURNAMENT HONORS & MEDALS</h3>
-        <div class="medals-rack">
-          <div class="medal-badge gold">
-            <span class="medal-icon">🥇</span>
-            <span class="medal-count" id="count-gold">0</span>
-            <span class="medal-label">GOLD</span>
-          </div>
-          <div class="medal-badge silver">
-            <span class="medal-icon">🥈</span>
-            <span class="medal-count" id="count-silver">0</span>
-            <span class="medal-label">SILVER</span>
-          </div>
-          <div class="medal-badge bronze">
-            <span class="medal-icon">🥉</span>
-            <span class="medal-count" id="count-bronze">0</span>
-            <span class="medal-label">BRONZE</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Certificate Upload & Gallery -->
-      <div class="bio-capsule" style="flex-direction: column; align-items: stretch;">
-        <div class="flex-between">
-          <h3 class="box-title-mini">// CERTIFICATE ARCHIVE</h3>
-          <label class="oval-btn primary file-input-label">
-            + UPLOAD CERTIFICATE
-            <input type="file" id="cert-upload-input" accept="image/*" style="display: none;">
-          </label>
-        </div>
-        <div id="certificate-gallery" class="cert-gallery"></div>
-      </div>
-
-      <!-- Sparring Round Chronometer -->
-      <div class="chronometer-capsule">
-        <svg class="chronometer-svg" viewBox="0 0 280 280">
-          <circle class="circle-bg" cx="140" cy="140" r="125" />
-          <circle id="timer-arc" class="circle-progress" cx="140" cy="140" r="125" />
-        </svg>
-        <div class="chronometer-core">
-          <span class="chrono-label">SPARRING BOUT</span>
-          <div id="chrono-digits" class="chrono-digits">03:00</div>
-          <div class="chrono-controls">
-            <button type="button" id="btn-toggle-round" class="oval-btn primary">ENGAGE</button>
-            <button type="button" id="btn-reset-round" class="oval-btn">RESET</button>
           </div>
         </div>
       </div>
@@ -233,56 +166,46 @@
         <button type="button" id="btn-toggle-register" class="oval-btn primary">+ ENROLL CADRE</button>
       </div>
 
-      <!-- ADMIN TOURNAMENT BROADCASTER -->
-      <div class="bio-capsule" style="flex-direction: column; align-items: stretch;">
-        <h3 class="box-title-mini">// 🥋 TOURNAMENT ANNOUNCEMENT ENGINE (ADMIN ONLY)</h3>
-        <div id="admin-tournament-display"></div>
-        <div style="display: flex; gap: 8px; margin-top: 8px;">
-          <button type="button" class="oval-btn primary" onclick="adminAddTournament()">+ POST TOURNAMENT</button>
-          <button type="button" class="oval-btn text-only" onclick="adminClearTournament()">CLEAR CURRENT</button>
-        </div>
+      <!-- Admin Tournament Controls -->
+      <div class="bio-capsule" style="flex-direction: column; align-items: stretch; margin-top: 15px;">
+        <h3 class="box-title-mini">// 🥋 TOURNAMENT BROADCAST (ADMIN ONLY)</h3>
+        <div id="tournament-display"></div>
+        <button type="button" class="oval-btn" onclick="adminAddTournament()" style="margin-top: 10px;">+ UPDATE TOURNAMENT</button>
       </div>
 
-      <!-- ADMIN SUBSCRIPTION CONFIRMATION -->
-      <div class="bio-capsule" style="flex-direction: column; align-items: stretch;">
-        <h3 class="box-title-mini">// 💳 VERIFY & ACTIVATE CADRE PLAN</h3>
-        <p style="color: #aaa; font-size: 0.8rem; margin: 0 0 10px 0;">Manually grant membership after receiving UPI screenshot:</p>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="oval-btn" onclick="adminManuallyGrantPlan('1 Month Premium', 30)">ACTIVATE 1 MONTH (₹50)</button>
-          <button type="button" class="oval-btn" onclick="adminManuallyGrantPlan('1 Year Elite', 365)">ACTIVATE 1 YEAR (₹95)</button>
-        </div>
+      <!-- Admin Subscription Status -->
+      <div class="bio-capsule" style="flex-direction: column; align-items: stretch; margin-top: 15px;">
+        <h3 class="box-title-mini">// 💳 ACADEMY PLAN STATUS</h3>
+        <p style="color: #aaa; font-size: 0.85rem; margin: 0 0 10px 0;">
+          Current Membership Status: <span id="current-plan-badge" style="color: #4caf50; font-weight: bold;">Basic</span>
+        </p>
+        <button type="button" onclick="confirmPlanActivationManual()" class="oval-btn" style="max-width: 200px;">Verify & Activate Plan</button>
       </div>
-
-      <!-- Register Cadre Drawer -->
-      <div id="register-drawer" class="bio-capsule hidden" style="flex-direction: column; align-items: stretch;">
-        <h3 class="box-title-mini">// ENROLL NEW INITIATE</h3>
-        <div class="reg-inputs-grid">
-          <input type="text" id="reg-name" class="curved-search-input" placeholder="Full Name">
-          <input type="tel" id="reg-phone" class="curved-search-input" placeholder="WhatsApp (e.g. 9876543210)">
-          <select id="reg-belt" class="curved-search-input">
-            <option value="White">White Belt</option>
-            <option value="Yellow">Yellow Belt</option>
-            <option value="Orange">Orange Belt</option>
-            <option value="Green">Green Belt</option>
-            <option value="Blue">Blue Belt</option>
-            <option value="Purple">Purple Belt</option>
-            <option value="Brown">Brown Belt</option>
-            <option value="Black">Black Belt</option>
-          </select>
-        </div>
-        <button type="button" id="btn-confirm-register" class="oval-btn primary full-width">CONFIRM REGISTRATION</button>
-      </div>
-
-      <!-- Filter Input -->
-      <div class="search-capsule">
-        <input type="text" id="admin-search" class="curved-search-input" placeholder="Search student by name or belt rank...">
-      </div>
-
-      <!-- Master Roster List -->
-      <div id="admin-roster-cluster" class="roster-cluster"></div>
     </section>
   </div>
 
+  <script>
+    function showGateway() {
+      document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+      document.getElementById('view-gateway').classList.remove('hidden');
+      document.getElementById('btn-nav-gateway').classList.remove('hidden');
+      document.getElementById('btn-nav-logout').classList.add('hidden');
+    }
+    function openStudentLogin() {
+      document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+      document.getElementById('view-student-login').classList.remove('hidden');
+      document.getElementById('btn-nav-gateway').classList.add('hidden');
+      document.getElementById('btn-nav-logout').classList.remove('hidden');
+    }
+    function openAdminLogin() {
+      document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+      document.getElementById('view-admin-login').classList.remove('hidden');
+      document.getElementById('btn-nav-gateway').classList.add('hidden');
+      document.getElementById('btn-nav-logout').classList.remove('hidden');
+      const pass = document.getElementById("admin-login-pass");
+      if (pass) pass.value = "";
+    }
+  </script>
   <script src="script.js"></script>
 </body>
 </html>
