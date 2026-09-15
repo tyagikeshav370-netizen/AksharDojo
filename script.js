@@ -1,5 +1,5 @@
 /* =========================================================
-   AKSHAR DOJO: RESPONSIVE INTERACTIVE KINETIC MESH
+   AKSHAR DOJO: ZERO-SCRAMBLE GEOMETRIC WARP MESH
    ========================================================= */
 (function() {
   const canvas = document.getElementById("motion-net-canvas");
@@ -12,13 +12,7 @@
   const RADIUS = 180;
   const STRENGTH = 38;
 
-  const cursor = {
-    x: -9999,
-    y: -9999,
-    targetX: -9999,
-    targetY: -9999,
-    active: false
-  };
+  const cursor = { x: -9999, y: -9999, targetX: -9999, targetY: -9999, active: false };
 
   window.addEventListener("pointermove", (e) => {
     cursor.targetX = e.clientX;
@@ -34,17 +28,8 @@
     }
   }, { passive: true });
 
-  window.addEventListener("pointerleave", () => {
-    cursor.active = false;
-    cursor.targetX = -9999;
-    cursor.targetY = -9999;
-  });
-
-  window.addEventListener("touchend", () => {
-    cursor.active = false;
-    cursor.targetX = -9999;
-    cursor.targetY = -9999;
-  });
+  window.addEventListener("pointerleave", () => { cursor.active = false; cursor.targetX = -9999; cursor.targetY = -9999; });
+  window.addEventListener("touchend", () => { cursor.active = false; cursor.targetX = -9999; cursor.targetY = -9999; });
 
   function resize() {
     width = canvas.width = window.innerWidth;
@@ -125,169 +110,175 @@
 })();
 
 /* =========================================================
-   SECURITY & SENSEI AUTHENTICATION
+   SECURITY & SENSEI PASSCODE
    ========================================================= */
 function checkSenseiPass(input) {
   return input === "admin1235" || input === "Admin1235";
 }
 
 /* =========================================================
-   DATA STORAGE & STUDENT ROSTER ENGINE
+   STUDENT ROSTER DATA STORE
    ========================================================= */
+const DEFAULT_STUDENTS = [
+  { id: "1", name: "Aarav Sharma", phone: "9876543210", belt: "Yellow", classes: 14, gold: 1, silver: 0, bronze: 1, banned: false, plan: "1 Month", planExpiry: Date.now() + 25 * 86400000 },
+  { id: "2", name: "Rohan Verma", phone: "8765432109", belt: "Green", classes: 28, gold: 2, silver: 1, bronze: 0, banned: false, plan: "1 Year", planExpiry: Date.now() + 300 * 86400000 },
+  { id: "3", name: "Priya Tyagi", phone: "9123456780", belt: "White", classes: 4, gold: 0, silver: 0, bronze: 0, banned: false, plan: "Basic", planExpiry: 0 }
+];
+
 function getStudents() {
-  const data = localStorage.getItem("dojo_students");
+  const data = localStorage.getItem("dojo_roster");
   if (!data) {
-    // Initial sample student roster if none exists
-    const initial = [
-      { id: "stu_1", name: "Aarav Sharma", phone: "9876543210", belt: "Yellow Belt", classes: 12, gold: 1, silver: 0, bronze: 1, banned: false },
-      { id: "stu_2", name: "Pooja Verma", phone: "9811122233", belt: "Orange Belt", classes: 24, gold: 2, silver: 1, bronze: 0, banned: false }
-    ];
-    localStorage.setItem("dojo_students", JSON.stringify(initial));
-    return initial;
+    localStorage.setItem("dojo_roster", JSON.stringify(DEFAULT_STUDENTS));
+    return DEFAULT_STUDENTS;
   }
   return JSON.parse(data);
 }
 
-function saveStudents(list) {
-  localStorage.setItem("dojo_students", JSON.stringify(list));
-  renderAdminRoster();
+function saveStudents(students) {
+  localStorage.setItem("dojo_roster", JSON.stringify(students));
 }
 
-function toggleEnrollForm() {
-  const drawer = document.getElementById("enroll-drawer");
-  if (drawer) drawer.classList.toggle("hidden");
-}
+let activeStudent = null;
 
-function confirmEnrollStudent() {
-  const nameInput = document.getElementById("new-stu-name");
-  const phoneInput = document.getElementById("new-stu-phone");
-  const beltSelect = document.getElementById("new-stu-belt");
+/* =========================================================
+   SENSEI ROSTER CONTROLS: ATTENDANCE, MEDALS, BELTS, BAN, DELETE
+   ========================================================= */
+function renderAdminRoster() {
+  const container = document.getElementById("admin-roster-list");
+  if (!container) return;
 
-  const name = nameInput.value.trim();
-  const phone = phoneInput.value.trim();
-  const belt = beltSelect.value;
+  const students = getStudents();
+  const countSpan = document.getElementById("roster-count");
+  if (countSpan) countSpan.innerText = students.length;
 
-  if (!name || !phone) {
-    alert("Please enter full name and phone number!");
+  const query = (document.getElementById("roster-search")?.value || "").toLowerCase();
+  const filtered = students.filter(s => s.name.toLowerCase().includes(query) || s.phone.includes(query) || s.belt.toLowerCase().includes(query));
+
+  if (filtered.length === 0) {
+    container.innerHTML = "<p style='color:#777; font-size:0.85rem;'>No students match your query.</p>";
     return;
   }
 
+  const BELTS = ["White", "Yellow", "Orange", "Green", "Blue", "Purple", "Brown", "Black"];
+
+  container.innerHTML = filtered.map(s => {
+    const isExpired = s.planExpiry > 0 && Date.now() > s.planExpiry;
+    const planDisplay = isExpired ? "Basic (Expired)" : s.plan;
+    const isSubscribed = (s.plan === "1 Month" || s.plan === "1 Year") && !isExpired;
+
+    return `
+      <div class="roster-card ${s.banned ? 'banned' : ''}">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+          <div>
+            <strong style="font-size:1rem; color:#fff;">${s.name}</strong> 
+            ${s.banned ? '<span class="badge-banned">BANNED</span>' : ''}
+            <div style="color:#888; font-size:0.75rem; margin-top:2px;">
+              📱 ${s.phone} | Plan: <strong style="color:${isSubscribed ? '#4caf50' : '#ff9800'};">${planDisplay}</strong>
+            </div>
+          </div>
+          <button class="btn-action" style="color:#f44336; border-color:#f44336;" onclick="deleteStudent('${s.id}')">Delete</button>
+        </div>
+
+        <!-- Attendance & Belts -->
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0; font-size:0.8rem;">
+          <div>
+            <span>Belt: </span>
+            <select class="btn-action" onchange="changeBelt('${s.id}', this.value)">
+              ${BELTS.map(b => `<option value="${b}" ${s.belt === b ? 'selected' : ''}>${b}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <span>Classes: <strong>${s.classes}</strong></span>
+            <button class="btn-action" style="color:#4caf50;" onclick="adjustAttendance('${s.id}', 1)">+ Mark Present</button>
+            <button class="btn-action" onclick="adjustAttendance('${s.id}', -1)">- 1</button>
+          </div>
+        </div>
+
+        <!-- Medals -->
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px; font-size:0.8rem;">
+          <span>Medals:</span>
+          <span>🥇 ${s.gold} <button class="btn-action" onclick="adjustMedal('${s.id}', 'gold', 1)">+</button><button class="btn-action" onclick="adjustMedal('${s.id}', 'gold', -1)">-</button></span>
+          <span>🥈 ${s.silver} <button class="btn-action" onclick="adjustMedal('${s.id}', 'silver', 1)">+</button><button class="btn-action" onclick="adjustMedal('${s.id}', 'silver', -1)">-</button></span>
+          <span>🥉 ${s.bronze} <button class="btn-action" onclick="adjustMedal('${s.id}', 'bronze', 1)">+</button><button class="btn-action" onclick="adjustMedal('${s.id}', 'bronze', -1)">-</button></span>
+        </div>
+
+        <!-- Subscription Clearance Grant & Ban Toggle -->
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+          <button class="btn-action" style="${s.plan === 'Basic' ? 'background:#333; color:#aaa;' : ''}" onclick="setStudentPlan('${s.id}', 'Basic', 0)">Set Basic (Lock QR)</button>
+          <button class="btn-action" style="color:#4caf50;" onclick="setStudentPlan('${s.id}', '1 Month', 30)">Grant 1-Mo (₹50)</button>
+          <button class="btn-action" style="color:#64b5f6;" onclick="setStudentPlan('${s.id}', '1 Year', 365)">Grant 1-Yr (₹95)</button>
+          <button class="btn-action" style="${s.banned ? 'color:#4caf50;' : 'color:#ff9800;'}" onclick="toggleBanStudent('${s.id}')">
+            ${s.banned ? 'Unban' : 'Ban'}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function adminEnrollStudent() {
+  const name = document.getElementById("new-stu-name").value.trim();
+  const phone = document.getElementById("new-stu-phone").value.trim();
+  const belt = document.getElementById("new-stu-belt").value;
+  const plan = document.getElementById("new-stu-plan").value;
+
+  if (!name || !phone) {
+    alert("Please enter student name and phone!");
+    return;
+  }
+
+  let days = 0;
+  if (plan === "1 Month") days = 30;
+  if (plan === "1 Year") days = 365;
+
   const students = getStudents();
-  const newStudent = {
-    id: "stu_" + Date.now(),
-    name: name,
-    phone: phone,
-    belt: belt,
+  students.push({
+    id: Date.now().toString(),
+    name,
+    phone,
+    belt,
     classes: 0,
     gold: 0,
     silver: 0,
     bronze: 0,
-    banned: false
-  };
-
-  students.push(newStudent);
-  saveStudents(students);
-
-  nameInput.value = "";
-  phoneInput.value = "";
-  document.getElementById("enroll-drawer").classList.add("hidden");
-  alert(`Student Enrolled: ${name}`);
-}
-
-/* =========================================================
-   ADMIN ROSTER MANAGEMENT (ATTENDANCE, BELT, MEDALS, BAN, DELETE)
-   ========================================================= */
-function renderAdminRoster() {
-  const cluster = document.getElementById("admin-roster-cluster");
-  const countBadge = document.getElementById("roster-count-badge");
-  if (!cluster) return;
-
-  const students = getStudents();
-  const search = (document.getElementById("admin-roster-search")?.value || "").toLowerCase();
-
-  const filtered = students.filter(s => s.name.toLowerCase().includes(search) || s.belt.toLowerCase().includes(search));
-
-  if (countBadge) countBadge.innerText = `${filtered.length} Cadre Enrolled`;
-
-  if (filtered.length === 0) {
-    cluster.innerHTML = "<p style='color:#777; font-size:0.85rem; padding:10px 0;'>No students found matching query.</p>";
-    return;
-  }
-
-  let html = "";
-  filtered.forEach((s) => {
-    html += `
-      <div class="roster-card ${s.banned ? 'banned' : ''}">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div>
-            <h4 style="margin:0 0 4px 0; color:#fff; font-size:1rem;">
-              ${s.name} ${s.banned ? '<span style="color:#ff5252; font-size:0.75rem;">[BANNED]</span>' : ''}
-            </h4>
-            <div style="color:#aaa; font-size:0.8rem;">📞 ${s.phone} | 🥋 <strong>${s.belt}</strong></div>
-            <div style="color:#888; font-size:0.8rem; margin-top:2px;">
-              Attendance: <strong>${s.classes} Classes</strong> | 🥇 ${s.gold} | 🥈 ${s.silver} | 🥉 ${s.bronze}
-            </div>
-          </div>
-        </div>
-
-        <!-- Controls Grid -->
-        <div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); display:flex; flex-wrap:wrap; gap:4px;">
-          <!-- Attendance -->
-          <button type="button" class="action-btn success" onclick="adjustAttendance('${s.id}', 1)">+ Attendance</button>
-          <button type="button" class="action-btn" onclick="adjustAttendance('${s.id}', -1)">- Attendance</button>
-
-          <!-- Belt Change -->
-          <button type="button" class="action-btn" onclick="changeStudentBelt('${s.id}')">🥋 Change Belt</button>
-
-          <!-- Medals -->
-          <button type="button" class="action-btn" onclick="awardMedal('${s.id}', 'gold')">+ 🥇 Gold</button>
-          <button type="button" class="action-btn" onclick="awardMedal('${s.id}', 'silver')">+ 🥈 Silver</button>
-          <button type="button" class="action-btn" onclick="awardMedal('${s.id}', 'bronze')">+ 🥉 Bronze</button>
-
-          <!-- Ban / Unban -->
-          <button type="button" class="action-btn ${s.banned ? 'success' : 'danger'}" onclick="toggleBanStudent('${s.id}')">
-            ${s.banned ? '✅ Unban Student' : '⛔ Ban Student'}
-          </button>
-
-          <!-- Delete -->
-          <button type="button" class="action-btn danger" onclick="deleteStudent('${s.id}')">🗑️ Delete</button>
-        </div>
-      </div>
-    `;
+    banned: false,
+    plan: plan,
+    planExpiry: days > 0 ? Date.now() + (days * 86400000) : 0
   });
 
-  cluster.innerHTML = html;
+  saveStudents(students);
+  document.getElementById("new-stu-name").value = "";
+  document.getElementById("new-stu-phone").value = "";
+  document.getElementById("enroll-drawer").classList.add("hidden");
+  renderAdminRoster();
+  alert(`Cadre Enrolled: ${name} with ${plan} plan.`);
 }
 
 function adjustAttendance(id, delta) {
   const students = getStudents();
   const s = students.find(x => x.id === id);
-  if (s) {
-    s.classes = Math.max(0, (s.classes || 0) + delta);
-    saveStudents(students);
-  }
-}
-
-function changeStudentBelt(id) {
-  const belts = ["White Belt", "Yellow Belt", "Orange Belt", "Green Belt", "Blue Belt", "Purple Belt", "Brown Belt", "Black Belt"];
-  const students = getStudents();
-  const s = students.find(x => x.id === id);
   if (!s) return;
-
-  const currentIdx = belts.indexOf(s.belt);
-  const nextBelt = prompt(`Current Belt: ${s.belt}\nType new belt name (e.g. Yellow Belt, Green Belt, Black Belt):`, s.belt);
-  if (nextBelt && nextBelt.trim()) {
-    s.belt = nextBelt.trim();
-    saveStudents(students);
-  }
-}
-
-function awardMedal(id, type) {
-  const students = getStudents();
-  const s = students.find(x => x.id === id);
-  if (!s) return;
-  s[type] = (s[type] || 0) + 1;
+  s.classes = Math.max(0, (s.classes || 0) + delta);
   saveStudents(students);
+  renderAdminRoster();
+}
+
+function changeBelt(id, newBelt) {
+  const students = getStudents();
+  const s = students.find(x => x.id === id);
+  if (!s) return;
+  s.belt = newBelt;
+  saveStudents(students);
+  renderAdminRoster();
+}
+
+function adjustMedal(id, type, delta) {
+  const students = getStudents();
+  const s = students.find(x => x.id === id);
+  if (!s) return;
+  s[type] = Math.max(0, (s[type] || 0) + delta);
+  saveStudents(students);
+  renderAdminRoster();
 }
 
 function toggleBanStudent(id) {
@@ -296,72 +287,112 @@ function toggleBanStudent(id) {
   if (!s) return;
   s.banned = !s.banned;
   saveStudents(students);
+  renderAdminRoster();
+  alert(s.banned ? `${s.name} is now BANNED from session check-ins.` : `${s.name} has been UNBANNED.`);
 }
 
 function deleteStudent(id) {
-  if (!confirm("Are you sure you want to permanently delete this student record?")) return;
+  if (!confirm("Are you sure you want to completely remove this student profile?")) return;
   let students = getStudents();
   students = students.filter(x => x.id !== id);
   saveStudents(students);
+  renderAdminRoster();
+}
+
+function setStudentPlan(id, planName, days) {
+  const students = getStudents();
+  const s = students.find(x => x.id === id);
+  if (!s) return;
+  s.plan = planName;
+  s.planExpiry = days > 0 ? Date.now() + (days * 86400000) : 0;
+  saveStudents(students);
+  renderAdminRoster();
+  alert(`Updated subscription for ${s.name} to: ${planName}`);
 }
 
 /* =========================================================
-   STUDENT PORTAL RECOGNITION & ACTIONS
+   CADRE / STUDENT LOGIN & SUBSCRIPTION LOCK ENGINE
    ========================================================= */
-let activeStudent = null;
+function submitStudentLogin() {
+  const name = document.getElementById("stu-login-name").value.trim().toLowerCase();
+  const phone = document.getElementById("stu-login-phone").value.trim();
 
-function setupStudentPortalLogin() {
-  const form = document.getElementById("form-student-login");
-  if (!form) return;
+  const students = getStudents();
+  const student = students.find(s => s.name.toLowerCase() === name || s.phone === phone);
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = document.getElementById("stu-login-name").value.trim().toLowerCase();
-    const phone = document.getElementById("stu-login-phone").value.trim();
-    const err = document.getElementById("stu-login-err");
+  if (!student) {
+    alert("Cadre record not found! Please ask Sensei to enroll you.");
+    return;
+  }
 
-    const students = getStudents();
-    const match = students.find(s => s.name.toLowerCase() === name || s.phone === phone);
-
-    if (!match) {
-      err.innerText = "Cadre profile not found. Please contact Sensei.";
-      return;
-    }
-
-    if (match.banned) {
-      err.innerText = "ACCESS RESTRICTED: Your cadre access is currently banned.";
-      return;
-    }
-
-    activeStudent = match;
-    err.innerText = "";
-    document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
-    document.getElementById('view-student-portal').classList.remove('hidden');
-
-    // Populate dashboard
-    document.getElementById("stu-portal-name").innerText = match.name;
-    document.getElementById("stu-portal-rank").innerText = `${match.belt} // ${match.classes} Classes Logged`;
-    document.getElementById("stu-gold-count").innerText = match.gold || 0;
-    document.getElementById("stu-silver-count").innerText = match.silver || 0;
-    document.getElementById("stu-bronze-count").innerText = match.bronze || 0;
-  });
+  activeStudent = student;
+  loadStudentDashboard();
+  document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+  document.getElementById('view-student-portal').classList.remove('hidden');
 }
 
-function studentSelfCheckin() {
+function loadStudentDashboard() {
   if (!activeStudent) return;
-  const students = getStudents();
-  const s = students.find(x => x.id === activeStudent.id);
-  if (s) {
-    s.classes = (s.classes || 0) + 1;
-    saveStudents(students);
-    activeStudent = s;
-    document.getElementById("stu-portal-rank").innerText = `${s.belt} // ${s.classes} Classes Logged`;
-    alert("Attendance logged for today's session!");
+  document.getElementById("stu-portal-name").innerText = activeStudent.name.toUpperCase();
+  document.getElementById("stu-portal-belt").innerText = activeStudent.belt;
+  document.getElementById("stu-portal-classes").innerText = activeStudent.classes;
+  document.getElementById("stu-gold").innerText = activeStudent.gold;
+  document.getElementById("stu-silver").innerText = activeStudent.silver;
+  document.getElementById("stu-bronze").innerText = activeStudent.bronze;
+
+  // Subscription verification
+  const isExpired = activeStudent.planExpiry > 0 && Date.now() > activeStudent.planExpiry;
+  const currentPlan = isExpired ? "Basic (Expired)" : activeStudent.plan;
+  const badge = document.getElementById("current-plan-badge");
+  badge.innerText = currentPlan;
+
+  // ACCESS GATE: Determine if QR Code & Payment can be shown
+  const isEligible = (activeStudent.plan === "1 Month" || activeStudent.plan === "1 Year") && !isExpired;
+  const lockedNotice = document.getElementById("upi-locked-notice");
+  const unlockedSection = document.getElementById("upi-unlocked-section");
+
+  if (isEligible) {
+    unlockedSection.classList.remove("hidden");
+    lockedNotice.classList.add("hidden");
+    badge.style.color = "#4caf50";
+  } else {
+    unlockedSection.classList.add("hidden");
+    lockedNotice.classList.remove("hidden");
+    badge.style.color = "#ff9800";
+  }
+
+  const checkinBtn = document.getElementById("stu-checkin-btn");
+  if (activeStudent.banned) {
+    checkinBtn.disabled = true;
+    checkinBtn.innerText = "CLEARANCE FROZEN (BANNED)";
+    checkinBtn.style.background = "#555";
+  } else {
+    checkinBtn.disabled = false;
+    checkinBtn.innerText = "SESSION CHECK-IN";
+    checkinBtn.style.background = "";
   }
 }
 
+function recordStudentCheckin() {
+  if (!activeStudent) return;
+  if (activeStudent.banned) {
+    alert("Clearance frozen! Contact Sensei.");
+    return;
+  }
+
+  const students = getStudents();
+  const s = students.find(x => x.id === activeStudent.id);
+  if (!s) return;
+
+  s.classes = (s.classes || 0) + 1;
+  saveStudents(students);
+  activeStudent = s;
+  loadStudentDashboard();
+  alert(`Oss! Check-in recorded. Total sessions: ${s.classes}`);
+}
+
 /* =========================================================
-   UPI FEES & SUBSCRIPTIONS
+   UPI PAYMENTS AT HOME (LOCKED FOR BASIC)
    ========================================================= */
 const UPI_ID = "8178615663@ibl";
 const ACADEMY_NAME = "Akshar Karate Academy";
@@ -382,48 +413,20 @@ function showUPIPayment(amount, planName, days) {
   if (qr) qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiUri)}`;
   if (deepLink) deepLink.href = upiUri;
 
-  const msg = `Hello Sensei, I have paid ₹${amount} for ${planName}. Attached is my payment screenshot.`;
+  const stuName = activeStudent ? activeStudent.name : "Cadre Member";
+  const msg = `Hello Sensei, I (${stuName}) have paid ₹${amount} for ${planName}. Attached is my payment screenshot.`;
   if (wa) wa.href = `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`;
 
   if (box) box.style.display = "block";
-}
-
-function adminActivatePlanDirect(planName, days) {
-  const expiry = Date.now() + (days * 24 * 60 * 60 * 1000);
-  localStorage.setItem("dojo_plan", planName);
-  localStorage.setItem("dojo_plan_expiry", expiry.toString());
-  alert(`Plan Activated: ${planName}`);
-  checkDojoPlan();
-}
-
-function adminResetPlanToBasic() {
-  localStorage.setItem("dojo_plan", "Basic");
-  localStorage.removeItem("dojo_plan_expiry");
-  alert("Dojo status reverted to Basic.");
-  checkDojoPlan();
-}
-
-function checkDojoPlan() {
-  const badge = document.getElementById("current-plan-badge");
-  const plan = localStorage.getItem("dojo_plan") || "Basic";
-  const expiry = parseInt(localStorage.getItem("dojo_plan_expiry") || "0", 10);
-
-  if (plan !== "Basic" && Date.now() > expiry) {
-    localStorage.setItem("dojo_plan", "Basic");
-    localStorage.removeItem("dojo_plan_expiry");
-    if (badge) badge.innerText = "Basic (Expired)";
-  } else if (badge) {
-    badge.innerText = plan;
-  }
 }
 
 /* =========================================================
    TOURNAMENTS LOGIC
    ========================================================= */
 function adminAddTournament() {
-  const pass = prompt("Enter Sensei Passcode to Update Tournament:");
+  const pass = prompt("Enter Sensei Passcode:");
   if (!checkSenseiPass(pass)) {
-    alert("Unauthorized: Incorrect Passcode!");
+    alert("Unauthorized!");
     return;
   }
   const name = prompt("Enter Tournament Name & Venue:");
@@ -445,7 +448,7 @@ function renderTournamentUI() {
         return `
           <div style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 6px; margin: 8px 0;">
             <h4 style="margin: 0 0 6px 0; color: #fff;">🥋 ${t.name}</h4>
-            ${t.photo ? `<img src="${t.photo}" style="max-width:100%; border-radius:4px; margin:6px 0; display:block;" />` : ''}
+            ${t.photo ? `<img src="${t.photo}" style="max-width:100%; border-radius:4px; margin:6px 0;" />` : ''}
             <small style="color:#888;">Announced: ${t.date}</small>
           </div>
         `;
@@ -456,13 +459,10 @@ function renderTournamentUI() {
 }
 
 /* =========================================================
-   INITIALIZATION ON DOM LOAD
+   INITIALIZATION
    ========================================================= */
 window.addEventListener("DOMContentLoaded", () => {
-  checkDojoPlan();
   renderTournamentUI();
-  renderAdminRoster();
-  setupStudentPortalLogin();
 
   const passField = document.getElementById("admin-login-pass");
   if (passField) passField.value = "";
@@ -478,7 +478,7 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById('view-admin-portal').classList.remove('hidden');
         renderAdminRoster();
       } else {
-        if (errBox) errBox.innerText = "ACCESS DENIED: INVALID SENSEI PASSCODE";
+        if (errBox) errBox.innerText = "ACCESS DENIED: INVALID PASSCODE";
       }
     });
   }
