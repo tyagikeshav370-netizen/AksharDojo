@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>AksharDojo // Neural Edition</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#000000" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AksharDojo // Cadre Operations</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <link rel="stylesheet" href="style.css">
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 0;
@@ -33,227 +31,227 @@
       position: relative;
       z-index: 2;
       min-height: 100vh;
-      max-width: 720px;
-      margin: 0 auto;
     }
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
     .bio-capsule, .gateway-card {
-      background: rgba(16, 16, 22, 0.85) !important;
+      background: rgba(14, 14, 18, 0.85) !important;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
     .roster-card {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 8px;
       padding: 14px;
       margin-bottom: 12px;
     }
     .roster-card.banned {
+      opacity: 0.55;
       border-color: #f44336;
-      background: rgba(244, 67, 54, 0.08);
     }
-    .action-btn {
+    .btn-action {
       background: #1e1e24;
-      color: #fff;
+      color: #eee;
       border: 1px solid #444;
-      padding: 6px 10px;
+      padding: 5px 10px;
       border-radius: 4px;
-      font-size: 0.75rem;
       cursor: pointer;
-      margin-right: 4px;
-      margin-top: 4px;
+      font-size: 0.75rem;
     }
-    .action-btn.danger {
-      border-color: #e53935;
+    .btn-action:hover { background: #333; }
+    .badge-banned {
+      background: #f44336;
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+    .locked-notice {
+      background: rgba(255, 82, 82, 0.1);
+      border: 1px dashed rgba(255, 82, 82, 0.4);
+      padding: 14px;
+      border-radius: 8px;
+      text-align: center;
       color: #ff8a80;
-    }
-    .action-btn.success {
-      border-color: #43a047;
-      color: #a5d6a7;
+      font-size: 0.85rem;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
-  <!-- Background Interactive Mesh -->
   <canvas id="motion-net-canvas"></canvas>
 
   <div class="app-viewport">
-    <!-- Header -->
-    <header class="biometric-header" style="padding: 16px; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.06);">
+    <header class="biometric-header" style="padding: 16px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.06);">
       <div>
-        <div style="font-weight:700; font-size:1.15rem; letter-spacing:1px;">🥋 AKSHAR DOJO</div>
-        <span style="font-size:0.7rem; color:#888;">MARTIAL ARTS CADRE // V2035</span>
+        <div style="font-weight:700; font-size:1.15rem; letter-spacing:1.5px;">AKSHAR DOJO</div>
+        <span style="font-size:0.7rem; color:#888; letter-spacing:1px;">MARTIAL ARTS CADRE // V2035</span>
       </div>
       <div class="fluid-switch">
         <button type="button" id="btn-nav-gateway" class="switch-pill active" onclick="showGateway()">GATEWAY</button>
-        <button type="button" id="btn-nav-logout" class="switch-pill hidden" onclick="showGateway()">LOGOUT</button>
+        <button type="button" id="btn-nav-logout" class="switch-pill hidden" onclick="showGateway()">EXIT</button>
       </div>
     </header>
 
     <!-- SCREEN 1: GATEWAY SELECTOR -->
-    <section id="view-gateway" class="view-panel" style="padding: 24px 16px;">
+    <section id="view-gateway" class="view-panel" style="padding:24px 16px;">
       <div class="gateway-hub" style="max-width:480px; margin:0 auto;">
-        <h2 style="font-size:0.85rem; color:#888; margin-bottom:16px; letter-spacing:1px;">>_ SELECT CLEARANCE LEVEL</h2>
+        <h2 style="font-size:0.85rem; color:#888; margin-bottom:16px; letter-spacing:1px;">>_ SELECT ACCESS CLEARANCE</h2>
         <div style="display:flex; flex-direction:column; gap:14px;">
-          <div class="gateway-card" style="cursor:pointer;" onclick="openStudentLogin()">
-            <div style="font-size:1.8rem;">🥋</div>
-            <h3 style="margin:6px 0;">CADRE / STUDENT</h3>
-            <p style="font-size:0.8rem; color:#aaa; margin:0 0 12px 0;">Log training attendance, check your belt medals, and submit fee receipts.</p>
-            <button type="button" class="oval-btn primary">CADRE PORTAL</button>
+          <div class="gateway-card" style="padding:18px; border-radius:10px; cursor:pointer;" onclick="openStudentLogin()">
+            <div style="font-size:1.8rem; margin-bottom:6px;">🥋</div>
+            <h3 style="margin:0 0 6px 0; font-size:1.05rem;">CADRE / STUDENT</h3>
+            <p style="font-size:0.8rem; color:#aaa; margin:0 0 12px 0; line-height:1.4;">Check training attendance, medal showcase, and upload belt certificates.</p>
+            <button type="button" class="oval-btn primary">CADRE SIGN-IN</button>
           </div>
-          <div class="gateway-card" style="cursor:pointer;" onclick="openAdminLogin()">
-            <div style="font-size:1.8rem;">⛩️</div>
-            <h3 style="margin:6px 0;">SENSEI / ADMIN</h3>
-            <p style="font-size:0.8rem; color:#aaa; margin:0 0 12px 0;">Full student roster, attendance tracking, belt promotions, bans & fees.</p>
-            <button type="button" class="oval-btn">COMMAND TERMINAL</button>
+          <div class="gateway-card" style="padding:18px; border-radius:10px; cursor:pointer;" onclick="openAdminLogin()">
+            <div style="font-size:1.8rem; margin-bottom:6px;">⛩️</div>
+            <h3 style="margin:0 0 6px 0; font-size:1.05rem;">SENSEI / ADMIN</h3>
+            <p style="font-size:0.8rem; color:#aaa; margin:0 0 12px 0; line-height:1.4;">Full dojo roster control, medals, belt promotions, bans & fee audits.</p>
+            <button type="button" class="oval-btn">COMMAND ACCESS</button>
           </div>
         </div>
       </div>
     </section>
 
     <!-- SCREEN 2: STUDENT LOGIN -->
-    <section id="view-student-login" class="view-panel hidden" style="padding: 24px 16px;">
-      <div class="bio-capsule" style="max-width:400px; margin:0 auto;">
-        <h3 style="margin-top:0;">>_ STUDENT LOGIN</h3>
-        <form id="form-student-login">
-          <input type="text" id="stu-login-name" class="curved-search-input" placeholder="Your Name" required style="width:100%; padding:11px; margin:8px 0; background:#0e0e12; border:1px solid #333; color:#fff; border-radius:6px;" />
-          <input type="tel" id="stu-login-phone" class="curved-search-input" placeholder="WhatsApp / Phone" required style="width:100%; padding:11px; margin:8px 0; background:#0e0e12; border:1px solid #333; color:#fff; border-radius:6px;" />
-          <div id="stu-login-err" style="color:#ff5252; font-size:0.8rem; margin:6px 0;"></div>
-          <button type="submit" class="oval-btn primary" style="width:100%; padding:11px; margin-top:8px;">SIGN IN TO DOJO</button>
+    <section id="view-student-login" class="view-panel hidden" style="padding:24px 16px;">
+      <div class="bio-capsule" style="max-width:400px; margin:0 auto; padding:20px; border-radius:10px;">
+        <h3 style="margin-top:0;">>_ CADRE RECOGNITION</h3>
+        <form id="form-student-login" onsubmit="event.preventDefault(); submitStudentLogin();">
+          <input type="text" id="stu-login-name" class="curved-search-input" placeholder="Your Full Name" required style="width:100%; padding:11px; margin:8px 0; background:#0e0e12; border:1px solid #333; color:#fff; border-radius:6px;">
+          <input type="tel" id="stu-login-phone" class="curved-search-input" placeholder="Registered Phone / WhatsApp" required style="width:100%; padding:11px; margin:8px 0; background:#0e0e12; border:1px solid #333; color:#fff; border-radius:6px;">
+          <button type="submit" class="oval-btn primary" style="width:100%; padding:11px; margin-top:8px;">ENTER PROFILE</button>
           <button type="button" class="oval-btn text-only" onclick="showGateway()" style="width:100%; background:none; border:none; color:#888; margin-top:10px; cursor:pointer;">← Return to Gateway</button>
         </form>
       </div>
     </section>
 
-    <!-- SCREEN 3: SENSEI ADMIN LOGIN -->
-    <section id="view-admin-login" class="view-panel hidden" style="padding: 24px 16px;">
-      <div class="bio-capsule" style="max-width:400px; margin:0 auto;">
-        <h3 style="margin-top:0;">>_ SENSEI CLEARANCE TERMINAL</h3>
+    <!-- SCREEN 3: SENSEI LOGIN -->
+    <section id="view-admin-login" class="view-panel hidden" style="padding:24px 16px;">
+      <div class="bio-capsule" style="max-width:400px; margin:0 auto; padding:20px; border-radius:10px;">
+        <h3 style="margin-top:0;">>_ SENSEI TERMINAL</h3>
         <form id="form-admin-login" autocomplete="off">
-          <input type="password" id="admin-login-pass" placeholder="Enter Sensei Passcode" required autocomplete="new-password" value="" style="width:100%; padding:11px; margin:10px 0; background:#000; border:1px solid #444; color:#fff; border-radius:6px; font-size:16px; text-align:center;" />
+          <input type="password" id="admin-login-pass" placeholder="Enter Sensei Passcode" required autocomplete="new-password" value="" style="width:100%; padding:11px; margin:10px 0; background:#000; border:1px solid #444; color:#fff; border-radius:6px; font-size:16px; text-align:center;">
           <div id="admin-login-err" style="color: #ff5252; font-size: 0.8rem; margin-bottom: 8px;"></div>
-          <button type="submit" class="oval-btn primary" style="width:100%; padding:11px;">ACCESS COMMAND MATRIX</button>
+          <button type="submit" class="oval-btn primary" style="width:100%; padding:11px;">UNLOCK COMMAND MATRIX</button>
           <button type="button" class="oval-btn text-only" onclick="showGateway()" style="width:100%; background:none; border:none; color:#888; margin-top:10px; cursor:pointer;">← Return to Gateway</button>
         </form>
       </div>
     </section>
 
     <!-- SCREEN 4: STUDENT DASHBOARD -->
-    <section id="view-student-portal" class="view-panel hidden" style="padding: 20px 16px;">
-      <div class="bio-capsule">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <h3 id="stu-portal-name" style="margin:0 0 4px 0;">CADRE MEMBER</h3>
-            <span id="stu-portal-rank" style="color:#aaa; font-size:0.85rem;">White Belt // 0 Classes</span>
-          </div>
-          <button type="button" class="oval-btn primary" onclick="studentSelfCheckin()">Check-in</button>
-        </div>
+    <section id="view-student-portal" class="view-panel hidden" style="padding:20px 16px; max-width:600px; margin:0 auto;">
+      <div class="bio-capsule" style="padding:16px; border-radius:10px; margin-bottom:14px;">
+        <h3 id="stu-portal-name" style="margin:0 0 4px 0;">CADRE MEMBER</h3>
+        <p style="color:#aaa; font-size:0.85rem; margin:0 0 8px 0;">
+          Belt: <strong id="stu-portal-belt" style="color:#fff;">White</strong> | 
+          Classes Logged: <strong id="stu-portal-classes" style="color:#4caf50;">0</strong>
+        </p>
+        <p style="color:#aaa; font-size:0.85rem; margin:0 0 10px 0;">
+          Subscription Clearance: <span id="current-plan-badge" style="color:#4caf50; font-weight:bold;">Basic</span>
+        </p>
+        <button type="button" id="stu-checkin-btn" class="oval-btn primary" onclick="recordStudentCheckin()">SESSION CHECK-IN</button>
       </div>
 
       <!-- Student Medals Showcase -->
-      <div class="bio-capsule">
-        <h4 style="margin:0 0 10px 0;">🎖️ CADRE MEDALS</h4>
-        <div style="display:flex; gap:20px; font-size:1.1rem;">
-          <div>🥇 Gold: <strong id="stu-gold-count">0</strong></div>
-          <div>🥈 Silver: <strong id="stu-silver-count">0</strong></div>
-          <div>🥉 Bronze: <strong id="stu-bronze-count">0</strong></div>
+      <div class="bio-capsule" style="padding:16px; border-radius:10px; margin-bottom:14px;">
+        <h4 style="margin:0 0 10px 0;">🏅 HONORS & MEDALS</h4>
+        <div style="display:flex; justify-content:space-around; text-align:center;">
+          <div><div style="font-size:1.5rem;">🥇</div><strong id="stu-gold">0</strong><br><small style="color:#888;">GOLD</small></div>
+          <div><div style="font-size:1.5rem;">🥈</div><strong id="stu-silver">0</strong><br><small style="color:#888;">SILVER</small></div>
+          <div><div style="font-size:1.5rem;">🥉</div><strong id="stu-bronze">0</strong><br><small style="color:#888;">BRONZE</small></div>
         </div>
       </div>
 
       <!-- Tournaments Display -->
-      <div class="bio-capsule">
+      <div class="bio-capsule" style="padding:16px; border-radius:10px; margin-bottom:14px;">
         <h4 style="margin:0 0 10px 0;">🏆 UPCOMING TOURNAMENTS</h4>
         <div id="student-tournament-display"></div>
       </div>
 
-      <!-- Fees Payment -->
-      <div class="bio-capsule">
-        <h4 style="margin:0 0 8px 0;">💳 PAY FEES FROM HOME (UPI)</h4>
-        <p style="font-size:0.8rem; color:#bbb; margin:0 0 12px 0;">Select plan, scan QR code, and send payment screenshot via WhatsApp.</p>
-        <div style="display:flex; gap:10px; margin-bottom:12px;">
-          <button type="button" class="oval-btn primary" onclick="showUPIPayment(50, '1 Month Plan', 30)">1 MONTH (₹50)</button>
-          <button type="button" class="oval-btn primary" onclick="showUPIPayment(95, '1 Year Plan', 365)">1 YEAR (₹95)</button>
+      <!-- Fees Payment (Restricted to Subscribed Members Only) -->
+      <div class="bio-capsule" style="padding:16px; border-radius:10px;">
+        <h4 style="margin:0 0 8px 0;">💳 AT-HOME FEES PAYMENT (UPI)</h4>
+        
+        <!-- Locked Message for Basic / Non-Subscribed Cadres -->
+        <div id="upi-locked-notice" class="locked-notice hidden">
+          🔒 <strong>UPI Payment Portal Locked</strong><br>
+          You currently have a <strong>Basic Plan</strong>. Only students with an authorized <strong>1-Month</strong> or <strong>1-Year</strong> dojo subscription can access online QR fee payments. Contact Sensei to grant clearance.
         </div>
 
-        <div id="upi-payment-box" style="display:none; text-align:center; padding-top:12px; border-top:1px solid #333;">
-          <h4 id="upi-pay-title" style="color:#fff; margin:0 0 10px 0;"></h4>
-          <div style="background:#fff; display:inline-block; padding:8px; border-radius:8px;">
-            <img id="upi-qr-image" src="" alt="QR" style="width:180px; height:180px; display:block;" />
+        <!-- Unlocked View for Subscribed Students -->
+        <div id="upi-unlocked-section" class="hidden">
+          <p style="font-size:0.8rem; color:#bbb; margin:0 0 12px 0;">Your subscription clearance is active. Select plan to generate QR code and pay fees directly:</p>
+          
+          <div style="display:flex; gap:10px; margin-bottom:12px;">
+            <button type="button" class="oval-btn primary" onclick="showUPIPayment(50, '1 Month Renewal (₹50)', 30)">1 MONTH (₹50)</button>
+            <button type="button" class="oval-btn primary" onclick="showUPIPayment(95, '1 Year Renewal (₹95)', 365)">1 YEAR (₹95)</button>
           </div>
-          <div style="margin-top:12px; display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
-            <a id="upi-deep-link" href="#" class="oval-btn primary" style="text-decoration:none; padding:8px 14px; font-size:0.85rem;">Open UPI App</a>
-            <a id="whatsapp-receipt-link" href="#" target="_blank" class="oval-btn" style="text-decoration:none; background:#25D366; color:#fff; padding:8px 14px; font-size:0.85rem;">WhatsApp Proof</a>
+
+          <div id="upi-payment-box" style="display:none; text-align:center; padding-top:12px; border-top:1px solid #333;">
+            <h4 id="upi-pay-title" style="color:#fff; margin:0 0 10px 0; font-size:0.95rem;"></h4>
+            <div style="background:#fff; display:inline-block; padding:8px; border-radius:8px;">
+              <img id="upi-qr-image" src="" alt="QR" style="width:180px; height:180px; display:block;" />
+            </div>
+            <div style="margin-top:12px; display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+              <a id="upi-deep-link" href="#" class="oval-btn primary" style="text-decoration:none; padding:8px 14px; font-size:0.85rem;">Open UPI App</a>
+              <a id="whatsapp-receipt-link" href="#" target="_blank" class="oval-btn" style="text-decoration:none; background:#25D366; color:#fff; padding:8px 14px; font-size:0.85rem;">WhatsApp Proof</a>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- SCREEN 5: SENSEI ADMIN CONSOLE -->
-    <section id="view-admin-portal" class="view-panel hidden" style="padding: 20px 16px;">
-      <!-- Console Header & Register Button -->
-      <div class="bio-capsule" style="display:flex; justify-content:space-between; align-items:center;">
+    <section id="view-admin-portal" class="view-panel hidden" style="padding:20px 16px; max-width:680px; margin:0 auto;">
+      <div class="bio-capsule" style="padding:16px; border-radius:10px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
         <div>
-          <h3 style="margin:0 0 4px 0;">⛩️ SENSEI COMMAND CONSOLE</h3>
-          <span style="color:#aaa; font-size:0.8rem;">Dojo Master Management Terminal</span>
+          <h3 style="margin:0;">⛩️ SENSEI COMMAND CONSOLE</h3>
+          <p style="color:#888; font-size:0.8rem; margin:4px 0 0 0;">Cadre Operations, Roster & Subscriptions</p>
         </div>
-        <button type="button" class="oval-btn primary" onclick="toggleEnrollForm()">+ ENROLL STUDENT</button>
+        <button type="button" class="oval-btn primary" onclick="toggleEnrollForm()">+ ENROLL CADRE</button>
       </div>
 
-      <!-- Quick Enrollment Drawer -->
-      <div id="enroll-drawer" class="bio-capsule hidden">
-        <h4 style="margin:0 0 10px 0;">🥋 ENROLL NEW STUDENT</h4>
-        <input type="text" id="new-stu-name" placeholder="Full Name" style="width:100%; padding:10px; margin-bottom:8px; background:#000; border:1px solid #444; color:#fff; border-radius:4px;" />
-        <input type="tel" id="new-stu-phone" placeholder="WhatsApp / Phone" style="width:100%; padding:10px; margin-bottom:8px; background:#000; border:1px solid #444; color:#fff; border-radius:4px;" />
-        <select id="new-stu-belt" style="width:100%; padding:10px; margin-bottom:10px; background:#000; border:1px solid #444; color:#fff; border-radius:4px;">
-          <option value="White Belt">White Belt</option>
-          <option value="Yellow Belt">Yellow Belt</option>
-          <option value="Orange Belt">Orange Belt</option>
-          <option value="Green Belt">Green Belt</option>
-          <option value="Blue Belt">Blue Belt</option>
-          <option value="Purple Belt">Purple Belt</option>
-          <option value="Brown Belt">Brown Belt</option>
-          <option value="Black Belt">Black Belt</option>
+      <!-- Enroll Cadre Drawer -->
+      <div id="enroll-drawer" class="bio-capsule hidden" style="padding:16px; border-radius:10px; margin-bottom:14px;">
+        <h4 style="margin:0 0 10px 0;">// ENROLL NEW STUDENT</h4>
+        <input type="text" id="new-stu-name" placeholder="Student Full Name" style="width:100%; padding:10px; margin-bottom:8px; background:#000; border:1px solid #444; color:#fff; border-radius:4px;">
+        <input type="tel" id="new-stu-phone" placeholder="Phone / WhatsApp Number" style="width:100%; padding:10px; margin-bottom:8px; background:#000; border:1px solid #444; color:#fff; border-radius:4px;">
+        <select id="new-stu-belt" style="width:100%; padding:10px; margin-bottom:8px; background:#000; border:1px solid #444; color:#fff; border-radius:4px;">
+          <option value="White">White Belt</option>
+          <option value="Yellow">Yellow Belt</option>
+          <option value="Orange">Orange Belt</option>
+          <option value="Green">Green Belt</option>
+          <option value="Blue">Blue Belt</option>
+          <option value="Purple">Purple Belt</option>
+          <option value="Brown">Brown Belt</option>
+          <option value="Black">Black Belt</option>
         </select>
-        <button type="button" class="oval-btn primary" onclick="confirmEnrollStudent()" style="width:100%; padding:10px;">CONFIRM ENROLLMENT</button>
+        <select id="new-stu-plan" style="width:100%; padding:10px; margin-bottom:10px; background:#000; border:1px solid #444; color:#fff; border-radius:4px;">
+          <option value="Basic">Assign Plan: Basic (No QR Access)</option>
+          <option value="1 Month">Assign Plan: 1 Month (₹50)</option>
+          <option value="1 Year">Assign Plan: 1 Year (₹95)</option>
+        </select>
+        <button type="button" class="oval-btn primary" style="width:100%;" onclick="adminEnrollStudent()">CONFIRM ENROLLMENT</button>
       </div>
 
-      <!-- Master Student Roster & Actions -->
-      <div class="bio-capsule">
+      <!-- Master Cadre Roster -->
+      <div class="bio-capsule" style="padding:16px; border-radius:10px; margin-bottom:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h4 style="margin:0;">👥 CADRE ROSTER & ATTENDANCE</h4>
-          <span id="roster-count-badge" style="font-size:0.8rem; color:#888;">0 Students</span>
+          <h4 style="margin:0;">🥋 STUDENT ROSTER (<span id="roster-count">0</span>)</h4>
+          <input type="text" id="roster-search" placeholder="Search cadre..." oninput="renderAdminRoster()" style="padding:6px 10px; background:#000; border:1px solid #444; color:#fff; border-radius:4px; font-size:0.8rem;">
         </div>
-        <input type="text" id="admin-roster-search" oninput="renderAdminRoster()" placeholder="Search student by name..." style="width:100%; padding:9px; margin-bottom:14px; background:#000; border:1px solid #333; color:#fff; border-radius:6px; font-size:0.85rem;" />
-        
-        <!-- List container -->
-        <div id="admin-roster-cluster"></div>
+        <div id="admin-roster-list"></div>
       </div>
 
-      <!-- Subscription Management Section -->
-      <div class="bio-capsule">
-        <h4 style="margin:0 0 8px 0;">💳 DOJO SUBSCRIPTION & LICENSING</h4>
-        <p style="color:#aaa; font-size:0.85rem; margin:0 0 10px 0;">
-          Current Plan: <span id="current-plan-badge" style="color:#4caf50; font-weight:bold;">Basic</span>
-        </p>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button type="button" class="action-btn success" onclick="adminActivatePlanDirect('1 Month Plan (₹50)', 30)">Activate 1-Month Plan</button>
-          <button type="button" class="action-btn success" onclick="adminActivatePlanDirect('1 Year Plan (₹95)', 365)">Activate 1-Year Plan</button>
-          <button type="button" class="action-btn danger" onclick="adminResetPlanToBasic()">Degrade to Basic</button>
-        </div>
-      </div>
-
-      <!-- Tournament Management Section -->
-      <div class="bio-capsule">
-        <h4 style="margin:0 0 10px 0;">🥋 TOURNAMENT BROADCAST</h4>
+      <!-- Tournament Admin Controls -->
+      <div class="bio-capsule" style="padding:16px; border-radius:10px; margin-bottom:14px;">
+        <h4 style="margin:0 0 10px 0;">🏆 TOURNAMENT BROADCAST</h4>
         <div id="tournament-display"></div>
-        <button type="button" class="oval-btn" onclick="adminAddTournament()" style="margin-top:8px;">+ UPDATE TOURNAMENT</button>
+        <button type="button" class="oval-btn" onclick="adminAddTournament()" style="margin-top:8px;">+ POST / UPDATE TOURNAMENT</button>
       </div>
     </section>
   </div>
@@ -278,6 +276,10 @@
       document.getElementById('btn-nav-logout').classList.remove('hidden');
       const pass = document.getElementById("admin-login-pass");
       if (pass) pass.value = "";
+    }
+    function toggleEnrollForm() {
+      const drawer = document.getElementById("enroll-drawer");
+      drawer.classList.toggle("hidden");
     }
   </script>
   <script src="script.js"></script>
