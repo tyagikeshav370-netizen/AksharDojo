@@ -1,138 +1,117 @@
 /* =========================================================
-   AKSHAR DOJO: RESPONSIVE DYNAMIC SQUARE NET (MOUSE + TOUCH)
+   AKSHAR DOJO: ZERO-SCRAMBLE GEOMETRIC WARP MESH
    ========================================================= */
-(function initReactiveGrid() {
+(function initWarpMesh() {
   const canvas = document.getElementById("motion-net-canvas");
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
   let width = 0, height = 0;
-  let cols = 0, rows = 0;
-  let grid = [];
-  const SPACING = 48;
-  const RADIUS = 140;
+  const SPACING = 45; // Grid cell size
+  const RADIUS = 160; // Interaction radius
+  const MAX_PULL = 35; // Maximum pull towards cursor
 
-  let pointer = { x: -9999, y: -9999, active: false };
+  let mouse = { x: -9999, y: -9999, targetX: -9999, targetY: -9999 };
 
-  // Listen on window so events are never blocked by HTML buttons/cards
+  // Track globally on window so HTML elements don't block input
   window.addEventListener("pointermove", (e) => {
-    pointer.x = e.clientX;
-    pointer.y = e.clientY;
-    pointer.active = true;
+    mouse.targetX = e.clientX;
+    mouse.targetY = e.clientY;
   }, { passive: true });
 
   window.addEventListener("touchmove", (e) => {
-    if (e.touches.length > 0) {
-      pointer.x = e.touches[0].clientX;
-      pointer.y = e.touches[0].clientY;
-      pointer.active = true;
+    if (e.touches && e.touches.length > 0) {
+      mouse.targetX = e.touches[0].clientX;
+      mouse.targetY = e.touches[0].clientY;
     }
   }, { passive: true });
 
-  window.addEventListener("pointerleave", () => { pointer.active = false; });
-  window.addEventListener("touchend", () => { pointer.active = false; });
+  window.addEventListener("pointerleave", () => {
+    mouse.targetX = -9999;
+    mouse.targetY = -9999;
+  });
 
   function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
-    cols = Math.floor(width / SPACING) + 2;
-    rows = Math.floor(height / SPACING) + 2;
-    grid = [];
+  }
 
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+
+    // Smooth cursor interpolation
+    mouse.x += (mouse.targetX - mouse.x) * 0.15;
+    mouse.y += (mouse.targetY - mouse.y) * 0.15;
+
+    const cols = Math.ceil(width / SPACING) + 1;
+    const rows = Math.ceil(height / SPACING) + 1;
+
+    // Calculate displaced point coordinates on the fly (prevents scrambling)
+    const points = [];
     for (let c = 0; c < cols; c++) {
-      grid[c] = [];
+      points[c] = [];
       for (let r = 0; r < rows; r++) {
         const ox = c * SPACING;
         const oy = r * SPACING;
-        grid[c][r] = {
-          x: ox,
-          y: oy,
-          origX: ox,
-          origY: oy,
-          vx: 0,
-          vy: 0
-        };
-      }
-    }
-  }
 
-  function loop() {
-    ctx.clearRect(0, 0, width, height);
+        const dx = mouse.x - ox;
+        const dy = mouse.y - oy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // 1. Point physics update
-    for (let c = 0; c < cols; c++) {
-      for (let r = 0; r < rows; r++) {
-        const p = grid[c][r];
+        let px = ox;
+        let py = oy;
 
-        // Interaction with pointer
-        if (pointer.active) {
-          const dx = pointer.x - p.x;
-          const dy = pointer.y - p.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < RADIUS && dist > 0) {
-            const force = (1 - dist / RADIUS) * 12;
-            const angle = Math.atan2(dy, dx);
-            p.vx += Math.cos(angle) * force * 0.15;
-            p.vy += Math.sin(angle) * force * 0.15;
-          }
+        // Smooth Gaussian warp toward pointer
+        if (dist < RADIUS) {
+          const factor = Math.cos((dist / RADIUS) * (Math.PI / 2)) * MAX_PULL;
+          const angle = Math.atan2(dy, dx);
+          px += Math.cos(angle) * factor;
+          py += Math.sin(angle) * factor;
         }
 
-        // Spring back to base position
-        p.vx += (p.origX - p.x) * 0.08;
-        p.vy += (p.origY - p.y) * 0.08;
-
-        // Damping to eliminate infinite vibration / scrambling
-        p.vx *= 0.75;
-        p.vy *= 0.75;
-
-        p.x += p.vx;
-        p.y += p.vy;
+        points[c][r] = { x: px, y: py, dist: dist };
       }
     }
 
-    // 2. Draw square grid connections
+    // Render cleanly connected orthogonal lines
     ctx.lineWidth = 1;
 
     for (let c = 0; c < cols; c++) {
       for (let r = 0; r < rows; r++) {
-        const p = grid[c][r];
+        const p = points[c][r];
 
-        // Highlight lines near the cursor
-        const pDist = pointer.active ? Math.sqrt((pointer.x - p.x) ** 2 + (pointer.y - p.y) ** 2) : 999;
-        const alpha = pDist < RADIUS ? 0.35 : 0.09;
+        // Highlight cells close to the mouse
+        const alpha = p.dist < RADIUS ? 0.35 : 0.08;
         ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
 
-        // Connect right node
+        // Horizontal line
         if (c + 1 < cols) {
-          const right = grid[c + 1][r];
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
-          ctx.lineTo(right.x, right.y);
+          ctx.lineTo(points[c + 1][r].x, points[c + 1][r].y);
           ctx.stroke();
         }
 
-        // Connect bottom node
+        // Vertical line
         if (r + 1 < rows) {
-          const bottom = grid[c][r + 1];
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
-          ctx.lineTo(bottom.x, bottom.y);
+          ctx.lineTo(points[c][r + 1].x, points[c][r + 1].y);
           ctx.stroke();
         }
       }
     }
 
-    requestAnimationFrame(loop);
+    requestAnimationFrame(draw);
   }
 
   window.addEventListener("resize", resize);
   resize();
-  requestAnimationFrame(loop);
+  requestAnimationFrame(draw);
 })();
 
 /* =========================================================
-   SECURITY & PASSCODE LOGIC (admin1235 / Admin1235 only)
+   SECURITY & PASSCODE LOGIC (admin1235 / Admin1235)
    ========================================================= */
 function checkSenseiPass(input) {
   return input === "admin1235" || input === "Admin1235";
@@ -229,7 +208,7 @@ function renderTournamentUI() {
         return `
           <div style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 6px; margin: 8px 0;">
             <h4 style="margin: 0 0 6px 0; color: #fff;">🥋 ${t.name}</h4>
-            ${t.photo ? `<img src="${t.photo}" style="max-width:100%; border-radius:4px; margin:6px 0; display:block;" />` : ''}
+            ${t.photo ? `<img src="${t.photo}" style="max-width:100%; border-radius:4px; margin:6px 0;" />` : ''}
             <small style="color:#888;">Announced: ${t.date}</small>
           </div>
         `;
