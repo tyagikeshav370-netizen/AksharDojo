@@ -1,113 +1,138 @@
 /* =========================================================
-   AKSHAR DOJO: ZERO-SCRAMBLE GEOMETRIC WARP MESH
+   AKSHAR DOJO: ROCK-SOLID KINETIC NET (STABLE & FLUID)
    ========================================================= */
-(function initWarpMesh() {
+(function() {
   const canvas = document.getElementById("motion-net-canvas");
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
   let width = 0, height = 0;
-  const SPACING = 45; // Grid cell size
-  const RADIUS = 160; // Interaction radius
-  const MAX_PULL = 35; // Maximum pull towards cursor
+  let cols = 0, rows = 0;
+  const GAP = 55; // Grid cell dimension
+  const RADIUS = 180; // Pull radius around cursor
+  const STRENGTH = 38; // Max movement distance
 
-  let mouse = { x: -9999, y: -9999, targetX: -9999, targetY: -9999 };
+  // Global mouse tracker (listens to root window)
+  const cursor = {
+    x: -9999,
+    y: -9999,
+    targetX: -9999,
+    targetY: -9999,
+    active: false
+  };
 
-  // Track globally on window so HTML elements don't block input
   window.addEventListener("pointermove", (e) => {
-    mouse.targetX = e.clientX;
-    mouse.targetY = e.clientY;
+    cursor.targetX = e.clientX;
+    cursor.targetY = e.clientY;
+    cursor.active = true;
   }, { passive: true });
 
   window.addEventListener("touchmove", (e) => {
-    if (e.touches && e.touches.length > 0) {
-      mouse.targetX = e.touches[0].clientX;
-      mouse.targetY = e.touches[0].clientY;
+    if (e.touches && e.touches[0]) {
+      cursor.targetX = e.touches[0].clientX;
+      cursor.targetY = e.touches[0].clientY;
+      cursor.active = true;
     }
   }, { passive: true });
 
   window.addEventListener("pointerleave", () => {
-    mouse.targetX = -9999;
-    mouse.targetY = -9999;
+    cursor.active = false;
+    cursor.targetX = -9999;
+    cursor.targetY = -9999;
+  });
+
+  window.addEventListener("touchend", () => {
+    cursor.active = false;
+    cursor.targetX = -9999;
+    cursor.targetY = -9999;
   });
 
   function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
+    cols = Math.ceil(width / GAP) + 2;
+    rows = Math.ceil(height / GAP) + 2;
   }
 
-  function draw() {
+  function render() {
     ctx.clearRect(0, 0, width, height);
 
     // Smooth cursor interpolation
-    mouse.x += (mouse.targetX - mouse.x) * 0.15;
-    mouse.y += (mouse.targetY - mouse.y) * 0.15;
+    if (cursor.active) {
+      cursor.x += (cursor.targetX - cursor.x) * 0.18;
+      cursor.y += (cursor.targetY - cursor.y) * 0.18;
+    } else {
+      cursor.x = -9999;
+      cursor.y = -9999;
+    }
 
-    const cols = Math.ceil(width / SPACING) + 1;
-    const rows = Math.ceil(height / SPACING) + 1;
-
-    // Calculate displaced point coordinates on the fly (prevents scrambling)
-    const points = [];
+    // Allocate 2D displaced matrix
+    const matrix = [];
     for (let c = 0; c < cols; c++) {
-      points[c] = [];
+      matrix[c] = [];
+      const originX = c * GAP;
+
       for (let r = 0; r < rows; r++) {
-        const ox = c * SPACING;
-        const oy = r * SPACING;
+        const originY = r * GAP;
 
-        const dx = mouse.x - ox;
-        const dy = mouse.y - oy;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        let posX = originX;
+        let posY = originY;
+        let dist = 9999;
 
-        let px = ox;
-        let py = oy;
+        if (cursor.active) {
+          const dx = cursor.x - originX;
+          const dy = cursor.y - originY;
+          dist = Math.sqrt(dx * dx + dy * dy);
 
-        // Smooth Gaussian warp toward pointer
-        if (dist < RADIUS) {
-          const factor = Math.cos((dist / RADIUS) * (Math.PI / 2)) * MAX_PULL;
-          const angle = Math.atan2(dy, dx);
-          px += Math.cos(angle) * factor;
-          py += Math.sin(angle) * factor;
+          // Pure displacement curve: zero scrambling, zero physics overshoot
+          if (dist < RADIUS && dist > 0.001) {
+            const pull = (1 - dist / RADIUS) * STRENGTH;
+            posX += (dx / dist) * pull;
+            posY += (dy / dist) * pull;
+          }
         }
 
-        points[c][r] = { x: px, y: py, dist: dist };
+        matrix[c][r] = { x: posX, y: posY, dist: dist };
       }
     }
 
-    // Render cleanly connected orthogonal lines
+    // Render strictly orthogonal grid lines
     ctx.lineWidth = 1;
 
     for (let c = 0; c < cols; c++) {
       for (let r = 0; r < rows; r++) {
-        const p = points[c][r];
+        const p = matrix[c][r];
 
-        // Highlight cells close to the mouse
+        // Soft glow near cursor, clean faint line elsewhere
         const alpha = p.dist < RADIUS ? 0.35 : 0.08;
         ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
 
-        // Horizontal line
+        // Horizontal neighbor line
         if (c + 1 < cols) {
+          const pRight = matrix[c + 1][r];
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
-          ctx.lineTo(points[c + 1][r].x, points[c + 1][r].y);
+          ctx.lineTo(pRight.x, pRight.y);
           ctx.stroke();
         }
 
-        // Vertical line
+        // Vertical neighbor line
         if (r + 1 < rows) {
+          const pBottom = matrix[c][r + 1];
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
-          ctx.lineTo(points[c][r + 1].x, points[c][r + 1].y);
+          ctx.lineTo(pBottom.x, pBottom.y);
           ctx.stroke();
         }
       }
     }
 
-    requestAnimationFrame(draw);
+    requestAnimationFrame(render);
   }
 
   window.addEventListener("resize", resize);
   resize();
-  requestAnimationFrame(draw);
+  requestAnimationFrame(render);
 })();
 
 /* =========================================================
@@ -208,7 +233,7 @@ function renderTournamentUI() {
         return `
           <div style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 6px; margin: 8px 0;">
             <h4 style="margin: 0 0 6px 0; color: #fff;">🥋 ${t.name}</h4>
-            ${t.photo ? `<img src="${t.photo}" style="max-width:100%; border-radius:4px; margin:6px 0;" />` : ''}
+            ${t.photo ? `<img src="${t.photo}" style="max-width:100%; border-radius:4px; margin:6px 0; display:block;" />` : ''}
             <small style="color:#888;">Announced: ${t.date}</small>
           </div>
         `;
