@@ -12,7 +12,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
-    /* Inline failsafe to guarantee background net & view switching */
     #motion-net-canvas {
       position: fixed;
       top: 0;
@@ -32,7 +31,7 @@
   <!-- 3D Gyroscopic Net Canvas -->
   <canvas id="motion-net-canvas"></canvas>
   <div class="ambient-spotlight"></div>
-
+  
   <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
     <defs>
       <linearGradient id="laserGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -59,7 +58,7 @@
       </div>
     </header>
 
-    <!-- SCREEN 1: GATEWAY SELECTOR (INITIAL LAUNCH SCREEN) -->
+    <!-- SCREEN 1: GATEWAY SELECTOR -->
     <section id="view-gateway" class="view-panel">
       <div class="gateway-hub">
         <h2 class="section-heading">>_ SELECT ACCESS CLEARANCE</h2>
@@ -67,13 +66,13 @@
           <div class="gateway-card" id="card-pick-student" onclick="openStudentLogin()">
             <div class="gateway-icon">🥋</div>
             <h3>CADRE / STUDENT</h3>
-            <p>Check training attendance, medal showcase, and upload belt certificates.</p>
+            <p>Check training attendance, medal showcase, pay fees from home, and tournament alerts.</p>
             <button type="button" class="oval-btn primary">CADRE SIGN-IN</button>
           </div>
           <div class="gateway-card" id="card-pick-admin" onclick="openAdminLogin()">
             <div class="gateway-icon">⛩️</div>
             <h3>SENSEI / ADMIN</h3>
-            <p>Full dojo roster control, direct attendance editing, fee audits & medals.</p>
+            <p>Roster control, verify fee receipts, post tournament banners, and edit ranks.</p>
             <button type="button" class="oval-btn">COMMAND ACCESS</button>
           </div>
         </div>
@@ -102,7 +101,7 @@
         <span class="box-sub">ENTER MASTER INSTRUCTOR CREDENTIALS</span>
         <form id="form-admin-login">
           <input type="text" id="admin-login-email" class="curved-search-input" placeholder="Operator Email" required autocomplete="username" spellcheck="false" autocapitalize="none">
-          <input type="password" id="admin-login-pass" class="curved-search-input" placeholder="Passcode" required autocomplete="current-password">
+          <input type="password" id="admin-login-pass" class="curved-search-input" placeholder="Passcode (Default: 1234)" required autocomplete="current-password">
           <div id="admin-login-err" class="alert-msg"></div>
           <button type="submit" id="btn-admin-submit" class="oval-btn primary full-width">UNLOCK COMMAND MATRIX</button>
           <button type="button" class="oval-btn text-only" onclick="showGateway()">← Return to Gateway</button>
@@ -129,6 +128,47 @@
         <div class="telemetry-actions">
           <button type="button" id="stu-self-checkin-btn" class="oval-btn primary" onclick="recordStudentCheckin()">SESSION CHECK-IN</button>
           <div id="stu-portal-fee" class="fee-badge PAID">PAID</div>
+        </div>
+      </div>
+
+      <!-- UPCOMING TOURNAMENT VIEWER FOR STUDENTS -->
+      <div class="bio-capsule" style="flex-direction: column; align-items: stretch;">
+        <h3 class="box-title-mini">// 🥋 UPCOMING TOURNAMENT NOTICE</h3>
+        <div id="student-tournament-display"></div>
+      </div>
+
+      <!-- PAY FEES AT HOME (UPI QR GENERATOR) -->
+      <div class="bio-capsule" style="flex-direction: column; align-items: stretch;">
+        <h3 class="box-title-mini">// 💳 PAY FEES FROM HOME / घर बैठे फीस जमा करें</h3>
+        <p style="color: #aaa; font-size: 0.8rem; margin: 4px 0 10px 0;">
+          Plan Status: <span id="current-plan-badge" style="color: #4caf50; font-weight: bold;">Basic</span>
+        </p>
+
+        <div style="background: rgba(255,255,255,0.04); border-left: 3px solid #0078d4; padding: 10px 14px; border-radius: 4px; margin-bottom: 12px; font-size: 0.8rem; line-height: 1.5;">
+          <strong style="color: #fff;">How to Pay / भुगतान का तरीका:</strong>
+          <ol style="margin: 4px 0 0 0; padding-left: 18px; color: #ccc;">
+            <li>Select <strong>₹50 (1 Month)</strong> or <strong>₹95 (1 Year)</strong>.</li>
+            <li>Scan the generated QR with <strong>GPay, PhonePe, Paytm, or BHIM</strong> (or click "Pay via UPI App").</li>
+            <li>Send the payment screenshot to Sensei on WhatsApp.</li>
+            <li>QR स्कैन करके पेमेंट करें और स्क्रीनशॉट व्हाट्सएप पर भेजें।</li>
+          </ol>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="button" class="oval-btn primary" onclick="showUPIPayment(50, '1 Month Premium', 30)">1 MONTH (₹50)</button>
+          <button type="button" class="oval-btn primary" onclick="showUPIPayment(95, '1 Year Elite', 365)">1 YEAR (₹95)</button>
+        </div>
+
+        <!-- Dynamic QR Box -->
+        <div id="upi-payment-box" style="display: none; text-align: center; margin-top: 14px; border-top: 1px solid #333; padding-top: 14px;">
+          <h4 id="upi-pay-title" style="color: #fff; margin: 0 0 8px 0; font-size: 0.95rem;"></h4>
+          <div style="background: #fff; display: inline-block; padding: 8px; border-radius: 8px;">
+            <img id="upi-qr-image" src="" alt="Payment QR Code" style="width: 190px; height: 190px; display: block;" />
+          </div>
+          <div style="margin-top: 10px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+            <a id="upi-deep-link" href="#" class="oval-btn primary" style="text-decoration: none;">Pay via UPI App</a>
+            <a id="whatsapp-receipt-link" href="#" target="_blank" class="oval-btn" style="text-decoration: none; background: #25D366; color: #fff;">WhatsApp Screenshot</a>
+          </div>
         </div>
       </div>
 
@@ -193,6 +233,26 @@
         <button type="button" id="btn-toggle-register" class="oval-btn primary">+ ENROLL CADRE</button>
       </div>
 
+      <!-- ADMIN TOURNAMENT BROADCASTER -->
+      <div class="bio-capsule" style="flex-direction: column; align-items: stretch;">
+        <h3 class="box-title-mini">// 🥋 TOURNAMENT ANNOUNCEMENT ENGINE (ADMIN ONLY)</h3>
+        <div id="admin-tournament-display"></div>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button type="button" class="oval-btn primary" onclick="adminAddTournament()">+ POST TOURNAMENT</button>
+          <button type="button" class="oval-btn text-only" onclick="adminClearTournament()">CLEAR CURRENT</button>
+        </div>
+      </div>
+
+      <!-- ADMIN SUBSCRIPTION CONFIRMATION -->
+      <div class="bio-capsule" style="flex-direction: column; align-items: stretch;">
+        <h3 class="box-title-mini">// 💳 VERIFY & ACTIVATE CADRE PLAN</h3>
+        <p style="color: #aaa; font-size: 0.8rem; margin: 0 0 10px 0;">Manually grant membership after receiving UPI screenshot:</p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="oval-btn" onclick="adminManuallyGrantPlan('1 Month Premium', 30)">ACTIVATE 1 MONTH (₹50)</button>
+          <button type="button" class="oval-btn" onclick="adminManuallyGrantPlan('1 Year Elite', 365)">ACTIVATE 1 YEAR (₹95)</button>
+        </div>
+      </div>
+
       <!-- Register Cadre Drawer -->
       <div id="register-drawer" class="bio-capsule hidden" style="flex-direction: column; align-items: stretch;">
         <h3 class="box-title-mini">// ENROLL NEW INITIATE</h3>
@@ -222,31 +282,6 @@
       <div id="admin-roster-cluster" class="roster-cluster"></div>
     </section>
   </div>
-
-  <!-- Direct Router Helper Scripts (Runs before script.js) -->
-  <script>
-    function openStudentLogin() {
-      if (window.selectRole) {
-        window.selectRole('STUDENT');
-      } else {
-        document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
-        document.getElementById('view-student-login').classList.remove('hidden');
-        document.getElementById('btn-nav-gateway').classList.add('hidden');
-        document.getElementById('btn-nav-logout').classList.remove('hidden');
-      }
-    }
-
-    function openAdminLogin() {
-      if (window.selectRole) {
-        window.selectRole('ADMIN');
-      } else {
-        document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
-        document.getElementById('view-admin-login').classList.remove('hidden');
-        document.getElementById('btn-nav-gateway').classList.add('hidden');
-        document.getElementById('btn-nav-logout').classList.remove('hidden');
-      }
-    }
-  </script>
 
   <script src="script.js"></script>
 </body>
