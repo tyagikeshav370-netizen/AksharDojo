@@ -1,126 +1,149 @@
 /* =========================================================
-   AKSHAR DOJO: MOUSE-REACTIVE INTERACTIVE SQUARE NET
+   AKSHAR DOJO: HIGH-RESPONSIVE KINETIC MOUSE GRID
    ========================================================= */
-(function initInteractiveNet() {
+(function initReactiveGrid() {
   const canvas = document.getElementById("motion-net-canvas");
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
   let width, height;
-  let points = [];
-  const SPACING = 55;
-  const MOUSE_RADIUS = 130;
+  let cols = 0, rows = 0;
+  let grid = [];
+  const SPACING = 50; // Grid square size
+  const MOUSE_RADIUS = 160; // Interaction radius
 
-  const mouse = { x: -1000, y: -1000, targetX: -1000, targetY: -1000 };
+  const mouse = { x: -9999, y: -9999, active: false };
 
-  window.addEventListener("mousemove", (e) => {
-    mouse.targetX = e.clientX;
-    mouse.targetY = e.clientY;
-  });
+  // Listen for mouse & touch globally
+  function updatePointer(clientX, clientY) {
+    mouse.x = clientX;
+    mouse.y = clientY;
+    mouse.active = true;
+  }
 
+  window.addEventListener("pointermove", (e) => updatePointer(e.clientX, e.clientY));
   window.addEventListener("touchmove", (e) => {
-    if (e.touches.length > 0) {
-      mouse.targetX = e.touches[0].clientX;
-      mouse.targetY = e.touches[0].clientY;
-    }
+    if (e.touches.length > 0) updatePointer(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: true });
 
-  window.addEventListener("mouseleave", () => {
-    mouse.targetX = -1000;
-    mouse.targetY = -1000;
-  });
+  window.addEventListener("pointerleave", () => { mouse.active = false; });
+  window.addEventListener("touchend", () => { mouse.active = false; });
 
   function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
-    initGrid();
-  }
-
-  function initGrid() {
-    points = [];
-    const cols = Math.ceil(width / SPACING) + 2;
-    const rows = Math.ceil(height / SPACING) + 2;
+    cols = Math.ceil(width / SPACING) + 1;
+    rows = Math.ceil(height / SPACING) + 1;
+    grid = [];
 
     for (let c = 0; c < cols; c++) {
+      grid[c] = [];
       for (let r = 0; r < rows; r++) {
         const ox = c * SPACING;
         const oy = r * SPACING;
-        points.push({
+        grid[c][r] = {
           x: ox,
           y: oy,
           origX: ox,
           origY: oy,
           vx: 0,
-          vy: 0,
-          col: c,
-          row: r
-        });
+          vy: 0
+        };
       }
     }
   }
 
-  function animate() {
+  function render() {
     ctx.clearRect(0, 0, width, height);
 
-    mouse.x += (mouse.targetX - mouse.x) * 0.15;
-    mouse.y += (mouse.targetY - mouse.y) * 0.15;
+    // 1. Calculate physics deformation
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        const p = grid[c][r];
 
-    for (let i = 0; i < points.length; i++) {
-      const p = points[i];
-      const dx = mouse.x - p.x;
-      const dy = mouse.y - p.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+        if (mouse.active) {
+          const dx = mouse.x - p.origX;
+          const dy = mouse.y - p.origY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (dist < MOUSE_RADIUS && dist > 0) {
-        const force = (1 - dist / MOUSE_RADIUS) * 35;
-        const angle = Math.atan2(dy, dx);
-        p.vx -= Math.cos(angle) * force * 0.08;
-        p.vy -= Math.sin(angle) * force * 0.08;
+          if (dist < MOUSE_RADIUS) {
+            // Visible magnetic pull towards mouse cursor
+            const force = (1 - dist / MOUSE_RADIUS);
+            const targetX = p.origX + dx * force * 0.45;
+            const targetY = p.origY + dy * force * 0.45;
+
+            p.vx += (targetX - p.x) * 0.18;
+            p.vy += (targetY - p.y) * 0.18;
+          } else {
+            // Spring back home
+            p.vx += (p.origX - p.x) * 0.08;
+            p.vy += (p.origY - p.y) * 0.08;
+          }
+        } else {
+          p.vx += (p.origX - p.x) * 0.08;
+          p.vy += (p.origY - p.y) * 0.08;
+        }
+
+        // Friction damping
+        p.vx *= 0.78;
+        p.vy *= 0.78;
+
+        p.x += p.vx;
+        p.y += p.vy;
       }
-
-      p.vx += (p.origX - p.x) * 0.05;
-      p.vy += (p.origY - p.y) * 0.05;
-
-      p.vx *= 0.82;
-      p.vy *= 0.82;
-
-      p.x += p.vx;
-      p.y += p.vy;
     }
 
+    // 2. Render clean square grid lines
     ctx.lineWidth = 1;
-    for (let i = 0; i < points.length; i++) {
-      const p1 = points[i];
 
-      for (let j = i + 1; j < points.length; j++) {
-        const p2 = points[j];
-        const isNeighbor =
-          (p1.col === p2.col && Math.abs(p1.row - p2.row) === 1) ||
-          (p1.row === p2.row && Math.abs(p1.col - p2.col) === 1);
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        const p = grid[c][r];
 
-        if (isNeighbor) {
-          const mDist = Math.sqrt((mouse.x - p1.x) ** 2 + (mouse.y - p1.y) ** 2);
-          const alpha = mDist < MOUSE_RADIUS ? 0.28 : 0.08;
+        // Highlight line intensity near cursor
+        const mDist = mouse.active ? Math.sqrt((mouse.x - p.x) ** 2 + (mouse.y - p.y) ** 2) : 999;
+        const alpha = mDist < MOUSE_RADIUS ? 0.35 : 0.10;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
 
-          ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+        // Connect right neighbor
+        if (c + 1 < cols) {
+          const right = grid[c + 1][r];
           ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(right.x, right.y);
+          ctx.stroke();
+        }
+
+        // Connect bottom neighbor
+        if (r + 1 < rows) {
+          const bottom = grid[c][r + 1];
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(bottom.x, bottom.y);
+          ctx.stroke();
+        }
+
+        // Direct web link to cursor if close
+        if (mouse.active && mDist < MOUSE_RADIUS * 0.6) {
+          ctx.strokeStyle = `rgba(255, 255, 255, ${(1 - mDist / (MOUSE_RADIUS * 0.6)) * 0.25})`;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(mouse.x, mouse.y);
           ctx.stroke();
         }
       }
     }
 
-    requestAnimationFrame(animate);
+    requestAnimationFrame(render);
   }
 
   window.addEventListener("resize", resize);
   resize();
-  requestAnimationFrame(animate);
+  requestAnimationFrame(render);
 })();
 
 /* =========================================================
-   AUTHENTICATION: ONLY admin1235 / Admin1235
+   SECURITY & AUTHENTICATION (admin1235 / Admin1235)
    ========================================================= */
 function checkSenseiPass(input) {
   return input === "admin1235" || input === "Admin1235";
@@ -176,7 +199,7 @@ function checkDojoPlan() {
   if (plan !== "Basic" && Date.now() > expiry) {
     localStorage.setItem("dojo_plan", "Basic");
     localStorage.removeItem("dojo_plan_expiry");
-    alert("Alert: Plan has expired. Reverted to Basic.");
+    alert("Alert: Membership plan has expired. Reverted to Basic.");
     if (badge) badge.innerText = "Basic (Expired)";
   } else if (badge) {
     badge.innerText = plan;
@@ -274,14 +297,10 @@ window.addEventListener("DOMContentLoaded", () => {
   renderTournamentUI();
 
   const passField = document.getElementById("admin-login-pass");
-  if (passField) {
-    passField.value = "";
-  }
+  if (passField) passField.value = "";
 
   const emailField = document.getElementById("admin-login-email");
-  if (emailField) {
-    emailField.value = "";
-  }
+  if (emailField) emailField.value = "";
 
   const adminForm = document.getElementById("form-admin-login");
   if (adminForm) {
