@@ -1,39 +1,42 @@
 /* =========================================================
-   AKSHAR DOJO: HIGH-RESPONSIVE KINETIC MOUSE GRID
+   AKSHAR DOJO: RESPONSIVE DYNAMIC SQUARE NET (MOUSE + TOUCH)
    ========================================================= */
 (function initReactiveGrid() {
   const canvas = document.getElementById("motion-net-canvas");
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
-  let width, height;
+  let width = 0, height = 0;
   let cols = 0, rows = 0;
   let grid = [];
-  const SPACING = 50; // Grid square size
-  const MOUSE_RADIUS = 160; // Interaction radius
+  const SPACING = 48;
+  const RADIUS = 140;
 
-  const mouse = { x: -9999, y: -9999, active: false };
+  let pointer = { x: -9999, y: -9999, active: false };
 
-  // Listen for mouse & touch globally
-  function updatePointer(clientX, clientY) {
-    mouse.x = clientX;
-    mouse.y = clientY;
-    mouse.active = true;
-  }
-
-  window.addEventListener("pointermove", (e) => updatePointer(e.clientX, e.clientY));
-  window.addEventListener("touchmove", (e) => {
-    if (e.touches.length > 0) updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+  // Listen on window so events are never blocked by HTML buttons/cards
+  window.addEventListener("pointermove", (e) => {
+    pointer.x = e.clientX;
+    pointer.y = e.clientY;
+    pointer.active = true;
   }, { passive: true });
 
-  window.addEventListener("pointerleave", () => { mouse.active = false; });
-  window.addEventListener("touchend", () => { mouse.active = false; });
+  window.addEventListener("touchmove", (e) => {
+    if (e.touches.length > 0) {
+      pointer.x = e.touches[0].clientX;
+      pointer.y = e.touches[0].clientY;
+      pointer.active = true;
+    }
+  }, { passive: true });
+
+  window.addEventListener("pointerleave", () => { pointer.active = false; });
+  window.addEventListener("touchend", () => { pointer.active = false; });
 
   function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
-    cols = Math.ceil(width / SPACING) + 1;
-    rows = Math.ceil(height / SPACING) + 1;
+    cols = Math.floor(width / SPACING) + 2;
+    rows = Math.floor(height / SPACING) + 2;
     grid = [];
 
     for (let c = 0; c < cols; c++) {
@@ -53,59 +56,54 @@
     }
   }
 
-  function render() {
+  function loop() {
     ctx.clearRect(0, 0, width, height);
 
-    // 1. Calculate physics deformation
+    // 1. Point physics update
     for (let c = 0; c < cols; c++) {
       for (let r = 0; r < rows; r++) {
         const p = grid[c][r];
 
-        if (mouse.active) {
-          const dx = mouse.x - p.origX;
-          const dy = mouse.y - p.origY;
+        // Interaction with pointer
+        if (pointer.active) {
+          const dx = pointer.x - p.x;
+          const dy = pointer.y - p.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < MOUSE_RADIUS) {
-            // Visible magnetic pull towards mouse cursor
-            const force = (1 - dist / MOUSE_RADIUS);
-            const targetX = p.origX + dx * force * 0.45;
-            const targetY = p.origY + dy * force * 0.45;
-
-            p.vx += (targetX - p.x) * 0.18;
-            p.vy += (targetY - p.y) * 0.18;
-          } else {
-            // Spring back home
-            p.vx += (p.origX - p.x) * 0.08;
-            p.vy += (p.origY - p.y) * 0.08;
+          if (dist < RADIUS && dist > 0) {
+            const force = (1 - dist / RADIUS) * 12;
+            const angle = Math.atan2(dy, dx);
+            p.vx += Math.cos(angle) * force * 0.15;
+            p.vy += Math.sin(angle) * force * 0.15;
           }
-        } else {
-          p.vx += (p.origX - p.x) * 0.08;
-          p.vy += (p.origY - p.y) * 0.08;
         }
 
-        // Friction damping
-        p.vx *= 0.78;
-        p.vy *= 0.78;
+        // Spring back to base position
+        p.vx += (p.origX - p.x) * 0.08;
+        p.vy += (p.origY - p.y) * 0.08;
+
+        // Damping to eliminate infinite vibration / scrambling
+        p.vx *= 0.75;
+        p.vy *= 0.75;
 
         p.x += p.vx;
         p.y += p.vy;
       }
     }
 
-    // 2. Render clean square grid lines
+    // 2. Draw square grid connections
     ctx.lineWidth = 1;
 
     for (let c = 0; c < cols; c++) {
       for (let r = 0; r < rows; r++) {
         const p = grid[c][r];
 
-        // Highlight line intensity near cursor
-        const mDist = mouse.active ? Math.sqrt((mouse.x - p.x) ** 2 + (mouse.y - p.y) ** 2) : 999;
-        const alpha = mDist < MOUSE_RADIUS ? 0.35 : 0.10;
+        // Highlight lines near the cursor
+        const pDist = pointer.active ? Math.sqrt((pointer.x - p.x) ** 2 + (pointer.y - p.y) ** 2) : 999;
+        const alpha = pDist < RADIUS ? 0.35 : 0.09;
         ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
 
-        // Connect right neighbor
+        // Connect right node
         if (c + 1 < cols) {
           const right = grid[c + 1][r];
           ctx.beginPath();
@@ -114,7 +112,7 @@
           ctx.stroke();
         }
 
-        // Connect bottom neighbor
+        // Connect bottom node
         if (r + 1 < rows) {
           const bottom = grid[c][r + 1];
           ctx.beginPath();
@@ -122,28 +120,19 @@
           ctx.lineTo(bottom.x, bottom.y);
           ctx.stroke();
         }
-
-        // Direct web link to cursor if close
-        if (mouse.active && mDist < MOUSE_RADIUS * 0.6) {
-          ctx.strokeStyle = `rgba(255, 255, 255, ${(1 - mDist / (MOUSE_RADIUS * 0.6)) * 0.25})`;
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(mouse.x, mouse.y);
-          ctx.stroke();
-        }
       }
     }
 
-    requestAnimationFrame(render);
+    requestAnimationFrame(loop);
   }
 
   window.addEventListener("resize", resize);
   resize();
-  requestAnimationFrame(render);
+  requestAnimationFrame(loop);
 })();
 
 /* =========================================================
-   SECURITY & AUTHENTICATION (admin1235 / Admin1235)
+   SECURITY & PASSCODE LOGIC (admin1235 / Admin1235 only)
    ========================================================= */
 function checkSenseiPass(input) {
   return input === "admin1235" || input === "Admin1235";
@@ -178,7 +167,13 @@ function showUPIPayment(amount, planName, days) {
 }
 
 function confirmPlanActivationManual() {
-  const planType = prompt("Enter plan to activate: 'month' (₹50) or 'year' (₹95):");
+  const pass = prompt("Enter Sensei Passcode to Authorize:");
+  if (!checkSenseiPass(pass)) {
+    alert("Unauthorized!");
+    return;
+  }
+
+  const planType = prompt("Enter plan: 'month' (₹50) or 'year' (₹95):");
   if (!planType) return;
 
   const days = planType.toLowerCase() === "year" ? 365 : 30;
@@ -187,7 +182,7 @@ function confirmPlanActivationManual() {
 
   localStorage.setItem("dojo_plan", planName);
   localStorage.setItem("dojo_plan_expiry", expiry.toString());
-  alert(`Plan Activated: ${planName}`);
+  alert(`Activated: ${planName}`);
   checkDojoPlan();
 }
 
@@ -199,7 +194,7 @@ function checkDojoPlan() {
   if (plan !== "Basic" && Date.now() > expiry) {
     localStorage.setItem("dojo_plan", "Basic");
     localStorage.removeItem("dojo_plan_expiry");
-    alert("Alert: Membership plan has expired. Reverted to Basic.");
+    alert("Alert: Plan has expired. Reverted to Basic.");
     if (badge) badge.innerText = "Basic (Expired)";
   } else if (badge) {
     badge.innerText = plan;
@@ -210,17 +205,16 @@ function checkDojoPlan() {
    TOURNAMENTS LOGIC
    ========================================================= */
 function adminAddTournament() {
-  openAdminModal("Enter Sensei Passcode for Tournament Update", (pass) => {
-    if (!checkSenseiPass(pass)) {
-      alert("Unauthorized: Incorrect Passcode!");
-      return;
-    }
-    const name = prompt("Enter Tournament Name & Venue:");
-    if (!name) return;
-    const photo = prompt("Poster Image URL (optional):") || "";
-    localStorage.setItem("upcoming_tournament", JSON.stringify({ name, photo, date: new Date().toLocaleDateString() }));
-    renderTournamentUI();
-  });
+  const pass = prompt("Enter Sensei Passcode:");
+  if (!checkSenseiPass(pass)) {
+    alert("Unauthorized!");
+    return;
+  }
+  const name = prompt("Enter Tournament Name & Venue:");
+  if (!name) return;
+  const photo = prompt("Poster Image URL (optional):") || "";
+  localStorage.setItem("upcoming_tournament", JSON.stringify({ name, photo, date: new Date().toLocaleDateString() }));
+  renderTournamentUI();
 }
 
 function renderTournamentUI() {
@@ -229,13 +223,13 @@ function renderTournamentUI() {
   const data = localStorage.getItem("upcoming_tournament");
 
   const html = !data
-    ? "<p style='color:#666; font-size:0.8rem;'>No tournaments scheduled.</p>"
+    ? "<p style='color:#777; font-size:0.8rem;'>No tournaments scheduled.</p>"
     : (() => {
         const t = JSON.parse(data);
         return `
-          <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; margin: 8px 0;">
+          <div style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 6px; margin: 8px 0;">
             <h4 style="margin: 0 0 6px 0; color: #fff;">🥋 ${t.name}</h4>
-            ${t.photo ? `<img src="${t.photo}" style="max-width:100%; border-radius:4px; margin:6px 0;" />` : ''}
+            ${t.photo ? `<img src="${t.photo}" style="max-width:100%; border-radius:4px; margin:6px 0; display:block;" />` : ''}
             <small style="color:#888;">Announced: ${t.date}</small>
           </div>
         `;
@@ -243,50 +237,6 @@ function renderTournamentUI() {
 
   if (containerAdmin) containerAdmin.innerHTML = html;
   if (containerStu) containerStu.innerHTML = html;
-}
-
-/* =========================================================
-   SECURE MASKED PASSCODE MODAL
-   ========================================================= */
-let modalCallback = null;
-
-function openAdminModal(title, callback) {
-  modalCallback = callback;
-  let modal = document.getElementById("sensei-auth-modal");
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "sensei-auth-modal";
-    modal.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:99999;";
-    modal.innerHTML = `
-      <div style="background:#111; border:1px solid #333; border-radius:8px; padding:20px; width:90%; max-width:320px; text-align:center;">
-        <h4 id="auth-modal-title" style="color:#fff; margin:0 0 12px 0; font-size:0.9rem;">SENSEI VERIFICATION</h4>
-        <input type="password" id="auth-modal-input" placeholder="••••••••" style="width:100%; padding:10px; border-radius:6px; border:1px solid #444; background:#000; color:#fff; font-size:16px; text-align:center; box-sizing:border-box;" />
-        <div style="margin-top:14px; display:flex; gap:8px; justify-content:center;">
-          <button id="auth-modal-submit" style="background:#0078d4; color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">SUBMIT</button>
-          <button id="auth-modal-cancel" style="background:#222; color:#aaa; border:1px solid #444; padding:8px 16px; border-radius:4px; cursor:pointer;">CANCEL</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    document.getElementById("auth-modal-submit").addEventListener("click", () => {
-      const val = document.getElementById("auth-modal-input").value;
-      modal.style.display = "none";
-      document.getElementById("auth-modal-input").value = "";
-      if (modalCallback) modalCallback(val);
-    });
-
-    document.getElementById("auth-modal-cancel").addEventListener("click", () => {
-      modal.style.display = "none";
-      document.getElementById("auth-modal-input").value = "";
-    });
-  }
-
-  document.getElementById("auth-modal-title").innerText = title;
-  modal.style.display = "flex";
-  const inp = document.getElementById("auth-modal-input");
-  inp.value = "";
-  inp.focus();
 }
 
 /* =========================================================
@@ -299,9 +249,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const passField = document.getElementById("admin-login-pass");
   if (passField) passField.value = "";
 
-  const emailField = document.getElementById("admin-login-email");
-  if (emailField) emailField.value = "";
-
   const adminForm = document.getElementById("form-admin-login");
   if (adminForm) {
     adminForm.addEventListener("submit", (e) => {
@@ -312,7 +259,7 @@ window.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
         document.getElementById('view-admin-portal').classList.remove('hidden');
       } else {
-        if (errBox) errBox.innerText = "ACCESS DENIED: INVALID SENSEI PASSCODE";
+        if (errBox) errBox.innerText = "ACCESS DENIED: INVALID PASSCODE";
       }
     });
   }
