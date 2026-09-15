@@ -1,83 +1,133 @@
 /* =========================================================
-   AKSHAR DOJO: SMOOTH GYROSCOPIC MOTION NET (NO SCRAMBLE)
+   AKSHAR DOJO: MOUSE-REACTIVE INTERACTIVE SQUARE NET
    ========================================================= */
-(function initCanvasNet() {
+(function initInteractiveNet() {
   const canvas = document.getElementById("motion-net-canvas");
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
   let width, height;
   let points = [];
-  const SPACING = 65; // Balanced grid spacing to stop distortion
+  const SPACING = 55;
+  const MOUSE_RADIUS = 130;
+
+  const mouse = { x: -1000, y: -1000, targetX: -1000, targetY: -1000 };
+
+  window.addEventListener("mousemove", (e) => {
+    mouse.targetX = e.clientX;
+    mouse.targetY = e.clientY;
+  });
+
+  window.addEventListener("touchmove", (e) => {
+    if (e.touches.length > 0) {
+      mouse.targetX = e.touches[0].clientX;
+      mouse.targetY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  window.addEventListener("mouseleave", () => {
+    mouse.targetX = -1000;
+    mouse.targetY = -1000;
+  });
 
   function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
-    points = [];
-    const cols = Math.ceil(width / SPACING) + 1;
-    const rows = Math.ceil(height / SPACING) + 1;
+    initGrid();
+  }
 
-    for (let i = 0; i < cols; i++) {
-      for (let j = 0; j < rows; j++) {
+  function initGrid() {
+    points = [];
+    const cols = Math.ceil(width / SPACING) + 2;
+    const rows = Math.ceil(height / SPACING) + 2;
+
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        const ox = c * SPACING;
+        const oy = r * SPACING;
         points.push({
-          x: i * SPACING,
-          y: j * SPACING,
-          baseX: i * SPACING,
-          baseY: j * SPACING,
-          phase: Math.random() * Math.PI * 2,
-          speed: 0.015 + Math.random() * 0.01
+          x: ox,
+          y: oy,
+          origX: ox,
+          origY: oy,
+          vx: 0,
+          vy: 0,
+          col: c,
+          row: r
         });
       }
     }
   }
 
-  function render(time) {
+  function animate() {
     ctx.clearRect(0, 0, width, height);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.09)";
-    ctx.lineWidth = 1;
 
-    // Smooth harmonic floating motion
+    mouse.x += (mouse.targetX - mouse.x) * 0.15;
+    mouse.y += (mouse.targetY - mouse.y) * 0.15;
+
     for (let i = 0; i < points.length; i++) {
-      let p = points[i];
-      p.x = p.baseX + Math.sin(time * 0.001 * p.speed + p.phase) * 12;
-      p.y = p.baseY + Math.cos(time * 0.001 * p.speed + p.phase) * 12;
+      const p = points[i];
+      const dx = mouse.x - p.x;
+      const dy = mouse.y - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < MOUSE_RADIUS && dist > 0) {
+        const force = (1 - dist / MOUSE_RADIUS) * 35;
+        const angle = Math.atan2(dy, dx);
+        p.vx -= Math.cos(angle) * force * 0.08;
+        p.vy -= Math.sin(angle) * force * 0.08;
+      }
+
+      p.vx += (p.origX - p.x) * 0.05;
+      p.vy += (p.origY - p.y) * 0.05;
+
+      p.vx *= 0.82;
+      p.vy *= 0.82;
+
+      p.x += p.vx;
+      p.y += p.vy;
     }
 
-    // Connect neighbor nodes cleanly
+    ctx.lineWidth = 1;
     for (let i = 0; i < points.length; i++) {
-      let p = points[i];
-      for (let j = i + 1; j < points.length; j++) {
-        let p2 = points[j];
-        let dx = p.x - p2.x;
-        let dy = p.y - p2.y;
-        let distSq = dx * dx + dy * dy;
+      const p1 = points[i];
 
-        if (distSq < SPACING * SPACING * 1.8) {
+      for (let j = i + 1; j < points.length; j++) {
+        const p2 = points[j];
+        const isNeighbor =
+          (p1.col === p2.col && Math.abs(p1.row - p2.row) === 1) ||
+          (p1.row === p2.row && Math.abs(p1.col - p2.col) === 1);
+
+        if (isNeighbor) {
+          const mDist = Math.sqrt((mouse.x - p1.x) ** 2 + (mouse.y - p1.y) ** 2);
+          const alpha = mDist < MOUSE_RADIUS ? 0.28 : 0.08;
+
+          ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
           ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
+          ctx.moveTo(p1.x, p1.y);
           ctx.lineTo(p2.x, p2.y);
           ctx.stroke();
         }
       }
     }
-    requestAnimationFrame(render);
+
+    requestAnimationFrame(animate);
   }
 
   window.addEventListener("resize", resize);
   resize();
-  requestAnimationFrame(render);
+  requestAnimationFrame(animate);
 })();
 
 /* =========================================================
-   SECURITY & PASSCODE VERIFICATION
+   AUTHENTICATION: ONLY admin1235 / Admin1235
    ========================================================= */
 function checkSenseiPass(input) {
-  // Only admin1235 and Admin1235 are accepted
   return input === "admin1235" || input === "Admin1235";
 }
 
 /* =========================================================
-   UPI & SUBSCRIPTION ENGINE
+   UPI FEES & SUBSCRIPTIONS
    ========================================================= */
 const UPI_ID = "8178615663@ibl";
 const ACADEMY_NAME = "Akshar Karate Academy";
@@ -98,27 +148,24 @@ function showUPIPayment(amount, planName, days) {
   if (qr) qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiUri)}`;
   if (deepLink) deepLink.href = upiUri;
 
-  const msg = `Hello Sensei, I have paid ₹${amount} for ${planName}. Here is the payment screenshot.`;
+  const msg = `Hello Sensei, I have paid ₹${amount} for ${planName}. Attached is my payment screenshot.`;
   if (wa) wa.href = `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`;
 
   if (box) box.style.display = "block";
 }
 
-function confirmPlanActivation() {
-  if (!selectedPlan) return;
-  openAdminModal("Enter Sensei Passcode to Activate Plan", (pass) => {
-    if (!checkSenseiPass(pass)) {
-      alert("Invalid Sensei Credentials!");
-      return;
-    }
-    const expiry = Date.now() + (selectedPlan.days * 24 * 60 * 60 * 1000);
-    localStorage.setItem("dojo_plan", selectedPlan.planName);
-    localStorage.setItem("dojo_plan_expiry", expiry.toString());
-    alert(`Success: Activated ${selectedPlan.planName}`);
-    const box = document.getElementById("upi-payment-box");
-    if (box) box.style.display = "none";
-    checkDojoPlan();
-  });
+function confirmPlanActivationManual() {
+  const planType = prompt("Enter plan to activate: 'month' (₹50) or 'year' (₹95):");
+  if (!planType) return;
+
+  const days = planType.toLowerCase() === "year" ? 365 : 30;
+  const planName = planType.toLowerCase() === "year" ? "1 Year Elite (₹95)" : "1 Month Premium (₹50)";
+  const expiry = Date.now() + (days * 24 * 60 * 60 * 1000);
+
+  localStorage.setItem("dojo_plan", planName);
+  localStorage.setItem("dojo_plan_expiry", expiry.toString());
+  alert(`Plan Activated: ${planName}`);
+  checkDojoPlan();
 }
 
 function checkDojoPlan() {
@@ -129,17 +176,20 @@ function checkDojoPlan() {
   if (plan !== "Basic" && Date.now() > expiry) {
     localStorage.setItem("dojo_plan", "Basic");
     localStorage.removeItem("dojo_plan_expiry");
-    alert("Alert: Membership plan has expired. Reverted to Basic.");
+    alert("Alert: Plan has expired. Reverted to Basic.");
     if (badge) badge.innerText = "Basic (Expired)";
   } else if (badge) {
     badge.innerText = plan;
   }
 }
 
+/* =========================================================
+   TOURNAMENTS LOGIC
+   ========================================================= */
 function adminAddTournament() {
-  openAdminModal("Enter Sensei Passcode for Tournaments", (pass) => {
+  openAdminModal("Enter Sensei Passcode for Tournament Update", (pass) => {
     if (!checkSenseiPass(pass)) {
-      alert("Unauthorized Access!");
+      alert("Unauthorized: Incorrect Passcode!");
       return;
     }
     const name = prompt("Enter Tournament Name & Venue:");
@@ -151,21 +201,25 @@ function adminAddTournament() {
 }
 
 function renderTournamentUI() {
-  const container = document.getElementById("tournament-display");
-  if (!container) return;
+  const containerAdmin = document.getElementById("tournament-display");
+  const containerStu = document.getElementById("student-tournament-display");
   const data = localStorage.getItem("upcoming_tournament");
-  if (!data) {
-    container.innerHTML = "<p style='color:#666; font-size:0.8rem;'>No upcoming tournaments announced yet.</p>";
-    return;
-  }
-  const t = JSON.parse(data);
-  container.innerHTML = `
-    <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; margin: 8px 0;">
-      <h4 style="margin: 0 0 6px 0; color: #fff;">🥋 ${t.name}</h4>
-      ${t.photo ? `<img src="${t.photo}" style="max-width:100%; border-radius:4px; margin:6px 0;" />` : ''}
-      <small style="color:#888;">Announced: ${t.date}</small>
-    </div>
-  `;
+
+  const html = !data
+    ? "<p style='color:#666; font-size:0.8rem;'>No tournaments scheduled.</p>"
+    : (() => {
+        const t = JSON.parse(data);
+        return `
+          <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; margin: 8px 0;">
+            <h4 style="margin: 0 0 6px 0; color: #fff;">🥋 ${t.name}</h4>
+            ${t.photo ? `<img src="${t.photo}" style="max-width:100%; border-radius:4px; margin:6px 0;" />` : ''}
+            <small style="color:#888;">Announced: ${t.date}</small>
+          </div>
+        `;
+      })();
+
+  if (containerAdmin) containerAdmin.innerHTML = html;
+  if (containerStu) containerStu.innerHTML = html;
 }
 
 /* =========================================================
@@ -213,17 +267,20 @@ function openAdminModal(title, callback) {
 }
 
 /* =========================================================
-   LOGIN SCREEN WIRING & CLEARING DEFAULT INPUT
+   LOGIN SCREEN INITIALIZATION
    ========================================================= */
 window.addEventListener("DOMContentLoaded", () => {
   checkDojoPlan();
   renderTournamentUI();
 
-  // Clear any cached/default values from login form
   const passField = document.getElementById("admin-login-pass");
   if (passField) {
     passField.value = "";
-    passField.setAttribute("type", "password");
+  }
+
+  const emailField = document.getElementById("admin-login-email");
+  if (emailField) {
+    emailField.value = "";
   }
 
   const adminForm = document.getElementById("form-admin-login");
